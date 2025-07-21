@@ -83,3 +83,8 @@ src/
 
 ### Development Protocols
 - Always look at the prisma/schema.prisma before creating api or codes
+- Always check types/ directory if there is available data types for specific schema model
+
+## Warnings and Cautions
+
+- Do not use or run migration especially forcing npx prisma migrate
