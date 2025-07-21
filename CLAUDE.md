@@ -50,8 +50,10 @@ src/
 
 ### Database Architecture
 - **Schema Location**: `prisma/schema.prisma`
-- **User Model**: Basic user entity with email, name, role (USER/ADMIN)
-- **Database Provider**: PostgreSQL
+- **Core Models**: User, UserAccounts, UserDetails, AttendeeRegistration
+- **Event Registration System**: Comprehensive BEACON 2025 event registration with enums for Gender, AgeBracket, Industry, EventDay, AttendeeType, InterestArea, HearAboutEvent
+- **User Management**: Multi-table user system with accounts, details, and registration data
+- **Database Provider**: PostgreSQL with Supabase
 - **Client Generation**: Custom output to `src/generated/prisma`
 
 ### Authentication Flow
@@ -65,10 +67,19 @@ src/
 - **Import Aliases**: `@/` maps to `./src/` for clean imports
 - **Component Aliases**: Pre-configured paths for `@/components`, `@/lib`, `@/hooks`, `@/ui`
 - **UI Library**: Lucide React for icons, extensive Radix UI primitives
-- **Fonts**: Custom Urbanist font family with multiple weights and styles
+- **Fonts**: Custom Urbanist font family with multiple weights and styles, plus Geist fonts
 
 ### Development Notes
 - Uses Turbopack in development for enhanced performance
 - Organized hook structure separating standard hooks from React Query hooks
 - Route group architecture for clean authentication flow
 - Custom Prisma client output location for better organization
+
+### Domain Context
+- **BEACON 2025**: Maritime industry event registration and management system
+- **Target Users**: Seafarers, corporate professionals, students, government officials, exhibitors, media
+- **Event Features**: Multi-day attendance tracking, industry categorization, interest area matching
+- **Registration Flow**: Comprehensive multi-step registration with personal, professional, and event-specific data
+
+### Development Protocols
+- Always look at the prisma/schema.prisma before creating api or codes

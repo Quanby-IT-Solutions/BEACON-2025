@@ -10,17 +10,100 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 //=================================
 // ENUM
 //=================================
 // ENUM
-enum UserRole {
-  USER
-  ADMIN
+
+enum UserType {
+  SEAFARER
+  CORPORATE_PROFESSIONAL
+  STUDENTS
+  OTHERS
+  SUPERADMIN
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ActiveStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  VISITOR
+}
+
+// BEACON 2025 Registration Enums
+enum Gender {
+  MALE
+  FEMALE
+  PREFER_NOT_TO_SAY
+  OTHERS
+}
+
+enum AgeBracket {
+  UNDER_18
+  AGE_18_24
+  AGE_25_34
+  AGE_35_44
+  AGE_45_54
+  AGE_55_ABOVE
+}
+
+enum Industry {
+  MARITIME
+  GOVERNMENT
+  TOURISM_HOSPITALITY
+  SHIPBUILDING_REPAIR
+  ACADEME_STUDENT
+  NGO_DEVELOPMENT
+  MEDIA_PRESS
+  OTHERS
+}
+
+enum EventDay {
+  SEPT_29
+  SEPT_30
+  OCT_1
+}
+
+enum AttendeeType {
+  TRADE_VISITOR
+  GOVERNMENT_OFFICIAL
+  STUDENT_ACADEMIC
+  MEDIA_PRESS
+  EXHIBITOR
+  SPEAKER_PANELIST
+  VIP_GUEST
+}
+
+enum InterestArea {
+  MARITIME_NAVAL_TECH
+  SHIPBUILDING_REPAIR
+  SHIPPING_MANNING
+  GREEN_SUSTAINABLE
+  MARINE_TOURISM
+  INNOVATION_DIGITAL
+  MARITIME_EDUCATION
+  BLUE_ECONOMY
+  LUXURY_BOATS_YACHTS
+}
+
+enum HearAboutEvent {
+  FACEBOOK_SOCIAL_MEDIA
+  WEBSITE
+  EMAIL_INVITATION
+  REFERRED_BY_FRIEND
+  PARTICIPATED_LAST_YEAR
+  OTHER
 }
 
 //=================================
@@ -28,10 +111,80 @@ enum UserRole {
 //=================================
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  role      UserRole @default(USER)
+  id           String         @id @default(cuid())
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  UserAccounts UserAccounts[]
+  UserDetails  UserDetails[]
+  Visitors     Visitors[]
+}
+
+model UserAccounts {
+  id               String       @id @default(uuid())
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  status           ActiveStatus @default(PENDING)
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Section 2: Account Details
+  email            String       @unique
+  mobileNumber     String
+  landline         String?
+  faceScanningFile String?
+  identification   String?
+}
+
+model UserDetails {
+  id            String     @id @default(uuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Section 1: Personal Information
+  firstName     String
+  lastName      String
+  middleName    String?
+  suffix        String?
+  preferredName String?
+  gender        Gender // there will be others input field genderOthers
+  genderOthers  String?
+  ageBracket    AgeBracket
+  nationality   String
+}
+
+// BEACON 2025 Registration Models
+model Visitors {
+  id             String   @id @default(uuid())
+  userId         String?
+  // Section 3: Professional Information
+  jobTitle       String
+  companyName    String
+  industry       Industry // there will be others input field industryOthers
+  industryOthers String?
+  companyAddress String?
+  companyWebsite String?
+  businessEmail  String?
+
+  // Section 4: Interests & Preferences
+  attendingDays        EventDay[]
+  eventParts           String[] // This is a EXPO, CONFERENCE, PHILIPPINE IN-WATER SHIP & BOAT SHOW, BLUE RUNWAY, NETWORKING & AWARDS NIGHT
+  attendeeType         AttendeeType
+  interestAreas        InterestArea[]
+  receiveUpdates       Boolean        @default(false)
+  inviteToFutureEvents Boolean        @default(false)
+
+  // Section 5: Accessibility & Safety
+  specialAssistance      String?
+  emergencyContactPerson String
+  emergencyContactNumber String
+
+  // Section 6: Consent
+  dataPrivacyConsent Boolean
+  hearAboutEvent     HearAboutEvent // there will be others input field hearAboutOthers
+  hearAboutOthers    String?
+
+  // System fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
