@@ -32,7 +32,10 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
         name="hearAboutEvent"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>How did you hear about this event? *</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>How did you hear about this event? *</FormLabel>
+              <FormMessage />
+            </div>
             <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger className="w-full">
@@ -56,7 +59,6 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
                 <SelectItem value="OTHER">Other</SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
           </FormItem>
         )}
       />
@@ -67,11 +69,13 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
           name="hearAboutOthers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Please specify</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Please specify</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />

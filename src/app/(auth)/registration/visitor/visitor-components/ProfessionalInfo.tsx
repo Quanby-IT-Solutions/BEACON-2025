@@ -42,7 +42,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="jobTitle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Job Title {!isStudent && "*"}</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Job Title {!isStudent && "*"}</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input
                   {...field}
@@ -50,7 +53,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   placeholder={isStudent ? "Optional" : ""}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -59,7 +61,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="companyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company/School Name {!isStudent && "*"}</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Company/School Name {!isStudent && "*"}</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input
                   {...field}
@@ -67,7 +72,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   placeholder={isStudent ? "Optional" : ""}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -76,7 +80,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="industry"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Industry {!isStudent && "*"}</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Industry {!isStudent && "*"}</FormLabel>
+                <FormMessage />
+              </div>
               <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -108,7 +115,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   <SelectItem value="OTHERS">Others</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -118,11 +124,13 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
             name="industryOthers"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Please specify industry</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Please specify industry</FormLabel>
+                  <FormMessage />
+                </div>
                 <FormControl>
                   <Input {...field} value={field.value || ""} />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -132,7 +140,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="companyAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company/School Address</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Company/School Address</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Textarea
                   {...field}
@@ -140,7 +151,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   placeholder={isStudent ? "Optional" : ""}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -149,7 +159,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="companyWebsite"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company/School Website</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Company/School Website</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input
                   {...field}
@@ -157,7 +170,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   placeholder={isStudent ? "Optional" : ""}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -166,7 +178,10 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
           name="businessEmail"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Business/School Email</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Business/School Email</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input
                   type="email"
@@ -175,7 +190,6 @@ export function ProfessionalInfo({ form }: ProfessionalInfoProps) {
                   placeholder={isStudent ? "Optional" : ""}
                 />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />

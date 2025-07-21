@@ -15,16 +15,17 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
   // Calculate progress directly using useMemo to prevent infinite loops
   const progressData = useMemo(() => {
     let completedStepsCount = 0;
-    const totalSteps = 6;
+    const totalSteps = 7; // Added face capture as required step
     let currentStepNumber = 0;
 
-    // Step 1: Personal Info
+    // Step 1: Personal Info (including face capture)
     if (
       formValues.firstName &&
       formValues.lastName &&
       formValues.gender &&
       formValues.ageBracket &&
-      formValues.nationality
+      formValues.nationality &&
+      formValues.faceScannedUrl // Face capture is required
     ) {
       completedStepsCount++;
       currentStepNumber = Math.max(currentStepNumber, 1);
@@ -72,7 +73,7 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
     // Step 6: Additional Info
     if (formValues.hearAboutEvent && formValues.dataPrivacyConsent) {
       completedStepsCount++;
-      currentStepNumber = 6;
+      currentStepNumber = Math.max(currentStepNumber, 6);
     }
 
     const progressPercent = (completedStepsCount / totalSteps) * 100;
@@ -88,6 +89,7 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
     formValues.gender,
     formValues.ageBracket,
     formValues.nationality,
+    formValues.faceScannedUrl, // Added face capture to dependencies
     formValues.email,
     formValues.mobileNumber,
     formValues.attendeeType,

@@ -120,7 +120,7 @@ export default function VisitorRegistrationPage() {
             </div>
             <div className="flex-1 overflow-y-auto pb-32">
               <Form {...form}>
-                <div className="relative">
+                <div className="relative p-2">
                   {isSubmitting && (
                     <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 flex items-center justify-center">
                       <div className="text-center space-y-2">

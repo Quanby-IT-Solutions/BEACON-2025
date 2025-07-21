@@ -124,7 +124,7 @@ model UserAccounts {
   updated_at       DateTime     @updatedAt
   status           ActiveStatus @default(PENDING)
   userId           String
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 2: Account Details
   email            String       @unique
   mobileNumber     String
@@ -136,13 +136,14 @@ model UserAccounts {
 model UserDetails {
   id            String     @id @default(uuid())
   userId        String
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 1: Personal Information
   firstName     String
   lastName      String
   middleName    String?
   suffix        String?
   preferredName String?
+  faceScannedUrl String?
   gender        Gender // there will be others input field genderOthers
   genderOthers  String?
   ageBracket    AgeBracket
@@ -185,5 +186,5 @@ model Visitors {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RegistrationFormData } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
+import { FaceCapture } from "../components/FaceCapture";
 
 interface UserDetailsProps {
   form: UseFormReturn<RegistrationFormData>;
@@ -30,11 +31,13 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="firstName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First Name *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>First Name *</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -43,11 +46,13 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="lastName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Last Name *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Last Name *</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -56,11 +61,13 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="middleName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Middle Name</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Middle Name</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -69,11 +76,13 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="suffix"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Suffix</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Suffix</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -82,11 +91,13 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="preferredName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Preferred Username/Nickname</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Preferred Username/Nickname</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -95,7 +106,10 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Gender *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Gender *</FormLabel>
+                <FormMessage />
+              </div>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -111,7 +125,6 @@ export function UserDetails({ form }: UserDetailsProps) {
                   <SelectItem value="OTHERS">Others</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -121,11 +134,13 @@ export function UserDetails({ form }: UserDetailsProps) {
             name="genderOthers"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Please specify</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Please specify</FormLabel>
+                  <FormMessage />
+                </div>
                 <FormControl>
                   <Input {...field} value={field.value || ""} />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -135,7 +150,10 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="ageBracket"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Age Bracket *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Age Bracket *</FormLabel>
+                <FormMessage />
+              </div>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -151,7 +169,6 @@ export function UserDetails({ form }: UserDetailsProps) {
                   <SelectItem value="AGE_55_ABOVE">55 and above</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -160,11 +177,36 @@ export function UserDetails({ form }: UserDetailsProps) {
           name="nationality"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nationality *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Nationality *</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      
+      {/* Face Capture Section */}
+      <div className="space-y-4">
+        <h4 className="text-base font-semibold">Face Verification</h4>
+        <FormField
+          control={form.control}
+          name="faceScannedUrl"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>Face Photo</FormLabel>
+                <FormMessage />
+              </div>
+              <FormControl>
+                <FaceCapture
+                  onCapture={(imageDataUrl) => field.onChange(imageDataUrl)}
+                  capturedImage={field.value}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

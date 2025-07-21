@@ -29,8 +29,18 @@ const registerVisitor = async (data: RegistrationFormData): Promise<Registration
   console.log("Response status:", response.status);
   console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
-  const responseData = await response.json();
-  console.log("Response data:", responseData);
+  const responseText = await response.text();
+  console.log("Raw response:", responseText);
+
+  let responseData;
+  try {
+    responseData = JSON.parse(responseText);
+    console.log("Parsed response data:", responseData);
+  } catch (parseError) {
+    console.error("Failed to parse JSON response:", parseError);
+    console.error("Response was:", responseText);
+    throw new Error(`Invalid JSON response from server. Status: ${response.status}`);
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${responseData.message || "Registration failed"}`);

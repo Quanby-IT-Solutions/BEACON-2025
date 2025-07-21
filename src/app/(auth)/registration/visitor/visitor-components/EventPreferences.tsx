@@ -34,7 +34,10 @@ export function EventPreferences({ form }: EventPreferencesProps) {
         name="attendeeType"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Attendee Type *</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>Attendee Type *</FormLabel>
+              <FormMessage />
+            </div>
             <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger className="w-full">
@@ -57,7 +60,6 @@ export function EventPreferences({ form }: EventPreferencesProps) {
                 <SelectItem value="VIP_GUEST">VIP Guest</SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
           </FormItem>
         )}
       />
@@ -67,10 +69,11 @@ export function EventPreferences({ form }: EventPreferencesProps) {
         name="attendingDays"
         render={() => (
           <FormItem>
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <FormLabel className="text-base">
                 Which days will you attend? *
               </FormLabel>
+              <FormMessage />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.values(EventDay).map((day) => (
@@ -107,7 +110,6 @@ export function EventPreferences({ form }: EventPreferencesProps) {
                 />
               ))}
             </div>
-            <FormMessage />
           </FormItem>
         )}
       />
@@ -117,10 +119,11 @@ export function EventPreferences({ form }: EventPreferencesProps) {
         name="eventParts"
         render={() => (
           <FormItem>
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <FormLabel className="text-base">
                 Which event parts interest you? *
               </FormLabel>
+              <FormMessage />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {eventPartsOptions.map((part) => (
@@ -155,7 +158,6 @@ export function EventPreferences({ form }: EventPreferencesProps) {
                 />
               ))}
             </div>
-            <FormMessage />
           </FormItem>
         )}
       />
@@ -165,8 +167,9 @@ export function EventPreferences({ form }: EventPreferencesProps) {
         name="interestAreas"
         render={() => (
           <FormItem>
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <FormLabel className="text-base">Interest Areas *</FormLabel>
+              <FormMessage />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.values(InterestArea).map((area) => (
@@ -206,7 +209,6 @@ export function EventPreferences({ form }: EventPreferencesProps) {
                 />
               ))}
             </div>
-            <FormMessage />
           </FormItem>
         )}
       />

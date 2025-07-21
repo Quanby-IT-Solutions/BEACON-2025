@@ -14,6 +14,7 @@ export const baseRegistrationSchema = z.object({
   genderOthers: z.string().optional(),
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
+  faceScannedUrl: z.string().min(1, "Face capture is required"),
 
   // Account Details (UserAccounts)
   email: z.string().email("Invalid email format"),

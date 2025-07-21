@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma';
 import { z } from 'zod';
 import { AgeBracket, Gender, Industry, EventDay, AttendeeType, InterestArea, HearAboutEvent } from '@/generated/prisma';
+import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Base schema without conditional validation
 const baseVisitorSchema = z.object({
@@ -17,6 +23,7 @@ const baseVisitorSchema = z.object({
   genderOthers: z.string().optional().nullable(),
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
+  faceScannedUrl: z.string().min(1, "Face capture is required"),
 
   // Account Details (UserAccounts)
   email: z.string().email("Invalid email format"),
@@ -69,6 +76,46 @@ const visitorRegistrationSchema = baseVisitorSchema.refine((data) => {
   path: ["jobTitle"], // This will show the error on jobTitle field
 });
 
+// Helper function to upload base64 image to Supabase Storage
+async function uploadImageToSupabase(base64Image: string, userId: string): Promise<string> {
+  try {
+    // Remove data:image/jpeg;base64, prefix if present
+    const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+
+    // Convert base64 to buffer
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+    // Generate file name with user ID
+    const fileName = `${userId}.jpg`;
+    const filePath = `user-profile/${fileName}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('user-profile')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: true // This will replace if file already exists
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error);
+      throw new Error(`Failed to upload image: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: publicData } = supabase.storage
+      .from('user-profile')
+      .getPublicUrl(filePath);
+
+    return publicData.publicUrl;
+
+  } catch (error) {
+    console.error('Image upload error:', error);
+    throw error;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log("API: Received registration request");
@@ -98,7 +145,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create UserDetails
+      // Create UserDetails (initially without faceScannedUrl)
       const userDetails = await tx.userDetails.create({
         data: {
           userId: user.id,
@@ -111,6 +158,7 @@ export async function POST(request: NextRequest) {
           genderOthers: validatedData.genderOthers || null,
           ageBracket: validatedData.ageBracket,
           nationality: validatedData.nationality,
+          faceScannedUrl: null, // Initially null
         },
       });
 
@@ -148,12 +196,37 @@ export async function POST(request: NextRequest) {
       };
     });
 
+    // After successful transaction, handle face image upload if provided
+    let faceImageUrl: string | null = null;
+    if (validatedData.faceScannedUrl) {
+      console.log("API: Uploading face image to Supabase");
+      try {
+        faceImageUrl = await uploadImageToSupabase(validatedData.faceScannedUrl, result.user.id);
+
+        // Update UserDetails with the face image URL
+        await prisma.userDetails.update({
+          where: { id: result.userDetails.id }, // use the id from the create result
+          data: {
+            faceScannedUrl: faceImageUrl,
+          },
+        });
+
+
+        console.log("API: Face image uploaded and URL updated successfully");
+      } catch (imageError) {
+        console.error("API: Face image upload failed:", imageError);
+        // Log the error but don't fail the registration
+        // The user registration is already completed
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Visitor registration completed successfully",
       data: {
         userId: result.user.id,
         visitorId: result.visitor.id,
+        faceImageUrl: faceImageUrl,
       },
     }, { status: 201 });
 

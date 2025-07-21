@@ -29,7 +29,10 @@ export function UserAccounts({ form }: UserAccountsProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Email *</FormLabel>
+                <FormMessage />
+              </div>
               <div className="space-y-2">
                 <div className="relative">
                   <FormControl>
@@ -73,7 +76,6 @@ export function UserAccounts({ form }: UserAccountsProps) {
                   </Alert>
                 )}
               </div>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -82,11 +84,13 @@ export function UserAccounts({ form }: UserAccountsProps) {
           name="mobileNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number *</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Mobile Number *</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
@@ -95,11 +99,13 @@ export function UserAccounts({ form }: UserAccountsProps) {
           name="landline"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Landline</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Landline</FormLabel>
+                <FormMessage />
+              </div>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
