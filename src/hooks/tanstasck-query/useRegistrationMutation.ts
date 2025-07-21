@@ -56,17 +56,21 @@ export const useRegistrationMutation = () => {
     mutationFn: registerVisitor,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success("Registration completed successfully!");
+        // Success toast is now handled in the component for better control
         // Invalidate and refetch any related queries
         queryClient.invalidateQueries({ queryKey: ['visitors'] });
         queryClient.invalidateQueries({ queryKey: ['users'] });
       } else {
-        toast.error(data.message || "Registration failed");
+        toast.error("Registration Failed", {
+          description: data.message || "Please check your information and try again.",
+        });
       }
     },
     onError: (error) => {
       console.error("Registration error:", error);
-      toast.error("An error occurred during registration");
+      toast.error("Registration Error", {
+        description: "An unexpected error occurred. Please try again.",
+      });
     },
   });
 };

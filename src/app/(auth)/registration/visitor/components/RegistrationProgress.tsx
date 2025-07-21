@@ -15,29 +15,35 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
   // Calculate progress directly using useMemo to prevent infinite loops
   const progressData = useMemo(() => {
     let completedStepsCount = 0;
-    const totalSteps = 7; // Added face capture as required step
+    // For students: 7 steps (skip professional), for non-students: 8 steps
+    const totalSteps = isStudent ? 7 : 8;
     let currentStepNumber = 0;
 
-    // Step 1: Personal Info (including face capture)
+    // Step 1: Personal Info (without face capture)
     if (
       formValues.firstName &&
       formValues.lastName &&
       formValues.gender &&
       formValues.ageBracket &&
-      formValues.nationality &&
-      formValues.faceScannedUrl // Face capture is required
+      formValues.nationality
     ) {
       completedStepsCount++;
       currentStepNumber = Math.max(currentStepNumber, 1);
     }
 
-    // Step 2: Contact Info
-    if (formValues.email && formValues.mobileNumber) {
+    // Step 2: Face Capture
+    if (formValues.faceScannedUrl) {
       completedStepsCount++;
       currentStepNumber = Math.max(currentStepNumber, 2);
     }
 
-    // Step 3: Event Preferences
+    // Step 3: Contact Info
+    if (formValues.email && formValues.mobileNumber) {
+      completedStepsCount++;
+      currentStepNumber = Math.max(currentStepNumber, 3);
+    }
+
+    // Step 4: Event Preferences
     if (
       formValues.attendeeType &&
       formValues.attendingDays?.length > 0 &&
@@ -45,35 +51,35 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
       formValues.interestAreas?.length > 0
     ) {
       completedStepsCount++;
-      currentStepNumber = Math.max(currentStepNumber, 3);
+      currentStepNumber = Math.max(currentStepNumber, 4);
     }
 
-    // Step 4: Professional Info (skip for students)
+    // Step 5: Professional Info (skip for students)
     if (isStudent) {
       completedStepsCount++; // Auto-complete for students
-      currentStepNumber = Math.max(currentStepNumber, 4);
+      currentStepNumber = Math.max(currentStepNumber, 5);
     } else if (
       formValues.jobTitle &&
       formValues.companyName &&
       formValues.industry
     ) {
       completedStepsCount++;
-      currentStepNumber = Math.max(currentStepNumber, 4);
+      currentStepNumber = Math.max(currentStepNumber, 5);
     }
 
-    // Step 5: Emergency & Safety
+    // Step 6: Emergency & Safety
     if (
       formValues.emergencyContactPerson &&
       formValues.emergencyContactNumber
     ) {
       completedStepsCount++;
-      currentStepNumber = Math.max(currentStepNumber, 5);
+      currentStepNumber = Math.max(currentStepNumber, 6);
     }
 
-    // Step 6: Additional Info
+    // Step 7: Additional Info
     if (formValues.hearAboutEvent && formValues.dataPrivacyConsent) {
       completedStepsCount++;
-      currentStepNumber = Math.max(currentStepNumber, 6);
+      currentStepNumber = Math.max(currentStepNumber, 7);
     }
 
     const progressPercent = (completedStepsCount / totalSteps) * 100;
@@ -109,6 +115,7 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
   const stepNames = [
     "Getting Started",
     "Personal Info",
+    "Face Capture",
     "Contact Info",
     "Event Preferences",
     isStudent ? "Professional Info (Skipped)" : "Professional Info",

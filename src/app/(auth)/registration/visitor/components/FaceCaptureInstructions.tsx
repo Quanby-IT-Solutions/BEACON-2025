@@ -39,9 +39,9 @@ const instructions = [
       "Find a well-lit area with natural light if possible",
       "Ensure your camera is clean and unobstructed",
       "Position yourself in front of the camera",
-      "Remove sunglasses and hats for clear visibility"
+      "Remove sunglasses and hats for clear visibility",
     ],
-    tip: "Good lighting is essential for face detection to work properly."
+    tip: "Good lighting is essential for face detection to work properly.",
   },
   {
     step: 2,
@@ -51,9 +51,9 @@ const instructions = [
       "Hold your device steady at eye level",
       "Keep the camera about arm's length away",
       "Look directly into the camera lens",
-      "Keep your face upright and centered"
+      "Keep your face upright and centered",
     ],
-    tip: "The closer your face to the center, the better the detection."
+    tip: "The closer your face to the center, the better the detection.",
   },
   {
     step: 3,
@@ -63,9 +63,9 @@ const instructions = [
       "Position your face within the oval guide that will appear",
       "Make sure your entire face is visible",
       "Keep your expression neutral with eyes open",
-      "Wait for the green border indicating proper positioning"
+      "Wait for the green border indicating proper positioning",
     ],
-    tip: "The system will automatically detect when your face is properly positioned."
+    tip: "The system will automatically detect when your face is properly positioned.",
   },
   {
     step: 4,
@@ -75,17 +75,17 @@ const instructions = [
       "When you see 'Ready to Capture!' message, click the capture button",
       "Stay still during the capture process",
       "Review your photo and retake if needed",
-      "Ensure the photo clearly shows your face"
+      "Ensure the photo clearly shows your face",
     ],
-    tip: "You can retake the photo as many times as needed until you're satisfied."
-  }
+    tip: "You can retake the photo as many times as needed until you're satisfied.",
+  },
 ];
 
-export function FaceCaptureInstructions({ 
-  isOpen, 
-  onClose, 
-  onProceed, 
-  isMobile 
+export function FaceCaptureInstructions({
+  isOpen,
+  onClose,
+  onProceed,
+  isMobile,
 }: FaceCaptureInstructionsProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -106,7 +106,11 @@ export function FaceCaptureInstructions({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${isMobile ? "max-w-[95vw] w-full p-4" : "max-w-2xl"} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent
+        className={`${
+          isMobile ? "max-w-[95vw] w-full p-4" : "max-w-2xl"
+        } max-h-[90vh] overflow-y-auto scroll-none`}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 justify-center text-xl">
             <Camera className="w-6 h-6" />
@@ -157,11 +161,11 @@ export function FaceCaptureInstructions({
                 <IconComponent className="w-8 h-8 text-primary" />
               </div>
             </div>
-            
+
             <h3 className="text-xl font-semibold">
               Step {currentInstruction.step}: {currentInstruction.title}
             </h3>
-            
+
             <div className="space-y-3 text-left max-w-md mx-auto">
               {currentInstruction.content.map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
@@ -176,7 +180,8 @@ export function FaceCaptureInstructions({
               <div className="flex items-start gap-2">
                 <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                 <p className="text-sm text-blue-800">
-                  <span className="font-semibold">Tip:</span> {currentInstruction.tip}
+                  <span className="font-semibold">Tip:</span>{" "}
+                  {currentInstruction.tip}
                 </p>
               </div>
             </div>
@@ -188,19 +193,17 @@ export function FaceCaptureInstructions({
                 <div className="relative w-32 h-40 mx-auto bg-gray-200 rounded-lg overflow-hidden">
                   {/* Simulated camera view */}
                   <div className="absolute inset-0 bg-gradient-to-b from-gray-300 to-gray-400" />
-                  
+
                   {/* Oval guide */}
-                  <div 
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-24 border-2 border-dashed border-blue-400 rounded-full opacity-80"
-                  />
-                  
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-24 border-2 border-dashed border-blue-400 rounded-full opacity-80" />
+
                   {/* Face placeholder */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-20 bg-orange-200 rounded-full border-2 border-green-400">
                     <div className="absolute top-6 left-4 w-2 h-2 bg-gray-600 rounded-full" />
                     <div className="absolute top-6 right-4 w-2 h-2 bg-gray-600 rounded-full" />
                     <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-gray-600 rounded" />
                   </div>
-                  
+
                   {/* Status indicator */}
                   <Badge className="absolute top-1 left-1 text-xs bg-green-500 text-white">
                     <CheckCircle className="w-2 h-2 mr-1" />
@@ -239,10 +242,7 @@ export function FaceCaptureInstructions({
                 Start Camera
               </Button>
             ) : (
-              <Button
-                onClick={nextStep}
-                className="flex items-center gap-2"
-              >
+              <Button onClick={nextStep} className="flex items-center gap-2">
                 Next
                 <ArrowRight className="w-4 h-4" />
               </Button>
