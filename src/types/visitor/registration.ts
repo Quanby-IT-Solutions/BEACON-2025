@@ -1,6 +1,6 @@
 
+import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea } from "@prisma/client";
 import { z } from "zod";
-import { AgeBracket, Gender, Industry, EventDay, AttendeeType, InterestArea, HearAboutEvent } from "@/generated/prisma";
 
 // Base registration schema without the refine logic first
 export const baseRegistrationSchema = z.object({

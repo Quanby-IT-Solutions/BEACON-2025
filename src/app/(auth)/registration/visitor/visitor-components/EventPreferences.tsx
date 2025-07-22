@@ -18,7 +18,7 @@ import {
   RegistrationFormData,
   eventPartsOptions,
 } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
-import { EventDay, InterestArea } from "@/generated/prisma";
+import { EventDay, InterestArea } from "@prisma/client";
 
 interface EventPreferencesProps {
   form: UseFormReturn<RegistrationFormData>;

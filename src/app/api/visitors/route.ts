@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
 import { z } from 'zod';
-import { AgeBracket, Gender, Industry, EventDay, AttendeeType, InterestArea, HearAboutEvent } from '@/generated/prisma';
 import { createClient } from '@supabase/supabase-js';
+import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

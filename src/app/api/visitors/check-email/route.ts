@@ -1,5 +1,5 @@
+import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Email check error:', error);
-    
+
     return NextResponse.json({
       exists: false,
       message: "Error checking email"
