@@ -88,3 +88,64 @@ src/
 ## Warnings and Cautions
 
 - Do not use or run migration especially forcing npx prisma migrate
+
+## Payment Integration Notes
+
+- PayMongo tracks payments by checkout session/payment intent, not by the phone number used to pay
+- Even if someone else pays on behalf of the user (e.g., parents paying for children, assistants paying for bosses), the payment will be confirmed if:
+  - The correct amount is paid
+  - The payment is made to the correct PayMongo checkout session
+- PayMongo handles these scenarios perfectly through their webhook system
+
+## Form Schema Alignment Notes
+
+### Maritime League Section
+- ✅ isMaritimeLeagueMember → "Yes/No/Apply for membership"
+- ✅ tmlMemberCode → TML member code field
+
+### Event Registration Section
+- ✅ registerForConference → BEACON 2025 Conference
+- ✅ registerBoatShow → In-Water Show (FREE)
+- ✅ registerBlueRunway → Blue Runway Fashion Show
+
+### Conference Days Section
+- ✅ conferenceDuration → 1/2/3 days
+- ✅ attendingDay1/2/3 → Individual day selection
+
+### Personal/Contact/Professional/Interests Sections
+- ✅ All form fields mapped to schema fields
+
+### Payment Section - PayMongo Ready
+- ✅ totalPaymentAmount → Calculated total (₱2,000-₱9,000)
+- ✅ paymongoCheckoutId → PayMongo session tracking
+- ✅ isPaid → Automatic webhook confirmation
+- ✅ paymentMode → GCash/Bank/Walk-in
+
+### PayMongo Integration Flow
+```typescript
+// 1. Registration submission
+if (!isMaritimeLeagueMember) {
+  // Create PayMongo checkout
+  const checkout = await paymongo.createCheckout({
+    amount: calculateTotal(selections),
+    currency: 'PHP'
+  });
+
+  // Store in DB
+  await createConferencePayment({
+    paymongoCheckoutId: checkout.id,
+    totalAmount: checkout.amount,
+    requiresPayment: true
+  });
+}
+
+// 2. Webhook automatically confirms
+// When user pays from ANY device/phone
+webhook.on('payment.paid', async (event) => {       
+  await updatePayment({
+    isPaid: true,
+    paymentConfirmedAt: new Date(),
+    paymentConfirmedBy: 'webhook'
+  });
+});
+```
