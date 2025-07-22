@@ -105,6 +105,45 @@ enum HearAboutEvent {
   OTHER
 }
 
+// Additional Conference-specific Enums
+enum MaritimeLeagueMembership {
+  YES
+  NO
+  APPLY_FOR_MEMBERSHIP
+}
+
+enum ConferenceDuration {
+  ONE_DAY // ₱3,000
+  TWO_DAYS // ₱6,000
+  THREE_DAYS // ₱7,500
+}
+
+enum PaymentMode {
+  BANK_DEPOSIT_TRANSFER
+  GCASH
+  WALK_IN_ON_SITE
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+}
+
+enum ConferenceInterestArea {
+  SHIPBUILDING_SHIP_REPAIR
+  BOATBUILDING_YACHT_BUILDING
+  MARINE_TECHNOLOGY
+  NAVAL_DEFENSE_SECURITY
+  MARITIME_TOURISM
+  INNOVATION_SUSTAINABILITY
+  BLUE_ECONOMY
+  LIFESTYLE_FASHION
+  WOMEN_YOUTH_IN_MARITIME
+  OTHERS
+}
+
 //=================================
 // MODELS
 //=================================
@@ -116,6 +155,7 @@ model User {
   UserAccounts UserAccounts[]
   UserDetails  UserDetails[]
   Visitors     Visitors[]
+  Conferences  Conference[]
 }
 
 model UserAccounts {
@@ -134,20 +174,20 @@ model UserAccounts {
 }
 
 model UserDetails {
-  id            String     @id @default(uuid())
-  userId        String
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id             String     @id @default(uuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 1: Personal Information
-  firstName     String
-  lastName      String
-  middleName    String?
-  suffix        String?
-  preferredName String?
+  firstName      String
+  lastName       String
+  middleName     String?
+  suffix         String?
+  preferredName  String?
   faceScannedUrl String?
-  gender        Gender // there will be others input field genderOthers
-  genderOthers  String?
-  ageBracket    AgeBracket
-  nationality   String
+  gender         Gender // there will be others input field genderOthers
+  genderOthers   String?
+  ageBracket     AgeBracket
+  nationality    String
 }
 
 // BEACON 2025 Registration Models
@@ -187,4 +227,114 @@ model Visitors {
 
   // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// BEACON 2025 Conference-specific Registration Model
+
+model Conference {
+  id        String   @id @default(uuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Section 1: Maritime League Membership
+  isMaritimeLeagueMember MaritimeLeagueMembership
+  tmlMemberCode          String?
+
+  // Section 2: Event Registration
+  registerForConference Boolean @default(false)
+  registerBoatShow      Boolean @default(false) // FREE but registration required
+  registerBlueRunway    Boolean @default(false) // ₱2,000
+
+  // Section 3: Conference Registration (if selected)
+  conferenceDuration ConferenceDuration?
+  attendingDay1      Boolean             @default(false) // Sept 29
+  attendingDay2      Boolean             @default(false) // Sept 30
+  attendingDay3      Boolean             @default(false) // Oct 1
+
+  // Section 4: Personal Information
+  fullName      String
+  preferredName String?
+  gender        Gender
+  ageBracket    AgeBracket
+  nationality   String
+
+  // Section 5: Contact Details
+  email          String
+  mobileNumber   String
+  mailingAddress String?
+
+  // Section 6: Professional Information
+  jobTitle       String?
+  companyName    String?
+  industry       String?
+  companyAddress String?
+  companyWebsite String?
+
+  // Section 7: Areas of Interest
+  interestAreas       ConferenceInterestArea[]
+  otherInterests      String?
+  receiveEventInvites Boolean                  @default(false)
+
+  // Section 8: Payment Details (calculated field based on selections)
+  totalPaymentAmount  Decimal?
+  customPaymentAmount String? // For "Other amount" field
+
+  // Section 9: Consent & Confirmation
+  emailCertificate  Boolean @default(false)
+  photoVideoConsent Boolean @default(false)
+  dataUsageConsent  Boolean // Required field
+
+  // Payment Processing (for non-maritime league members)
+  paymentToken       String? // Token for payment link
+  paymentTokenExpiry DateTime? // 3-hour expiration
+  requiresPayment    Boolean   @default(false) // Based on maritime league membership
+
+  // Relations
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payment ConferencePayment?
+
+  @@map("conferences")
+}
+
+// Conference Payment Model - ONLY for Conference registrations
+model ConferencePayment {
+  id           String   @id @default(uuid())
+  conferenceId String   @unique // One payment per conference registration
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Payment Details - Conference Specific
+  totalAmount         Decimal
+  paymentMode         PaymentMode
+  paymentStatus       PaymentStatus @default(PENDING)
+  customPaymentAmount String? // For "Other amount" field from form
+  transactionId       String?
+  proofOfPaymentUrl   String? // File path or URL for uploaded proof
+  paymentDate         DateTime?
+
+  // PayMongo Integration Fields
+  paymongoPaymentId     String? // PayMongo payment ID
+  paymongoCheckoutId    String? // PayMongo checkout session ID
+  paymongoIntentId      String? // PayMongo payment intent ID
+  paymongoWebhookId     String? // PayMongo webhook event ID for confirmation
+  paymongoPaymentMethod String? // card, gcash, grabpay, etc.
+  paymongoReferenceId   String? // PayMongo reference number
+
+  // Payment Confirmation
+  isPaid             Boolean   @default(false) // Confirmed payment status
+  paymentConfirmedAt DateTime? // When payment was confirmed
+  paymentConfirmedBy String? // webhook, manual, etc.
+
+  // Payment Breakdown - Conference Specific
+  conferenceAmount Decimal? // Amount for conference days (₱3,000/₱6,000/₱7,500)
+  blueRunwayAmount Decimal? // Amount for Blue Runway Fashion Show (₱2,000)
+
+  // Payment Notes
+  notes String?
+
+  // Relations - ONLY linked to Conference
+  conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("conference_payments")
 }
