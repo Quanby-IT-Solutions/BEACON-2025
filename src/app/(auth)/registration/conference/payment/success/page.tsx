@@ -15,10 +15,29 @@ export default function PaymentSuccessPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkoutSessionId = searchParams.get('checkout_session_id');
-    
+    // Try multiple possible parameter names that PayMongo might use
+    const checkoutSessionId =
+      searchParams.get("checkout_session_id") ||
+      searchParams.get("session_id") ||
+      searchParams.get("checkout_id") ||
+      searchParams.get("cs");
+
+    console.log(
+      "URL search params:",
+      Object.fromEntries(searchParams.entries())
+    );
+    console.log("Looking for checkout session ID:", checkoutSessionId);
+
     if (!checkoutSessionId) {
-      setError('No checkout session ID found');
+      // Show available parameters for debugging
+      const allParams = Object.fromEntries(searchParams.entries());
+      console.log("Available URL parameters:", allParams);
+
+      setError(
+        `No checkout session ID found. Available parameters: ${
+          Object.keys(allParams).join(", ") || "none"
+        }`
+      );
       setIsLoading(false);
       return;
     }
@@ -26,17 +45,19 @@ export default function PaymentSuccessPage() {
     // Verify payment status with backend
     const verifyPayment = async () => {
       try {
-        const response = await fetch(`/api/conference/payment/verify?checkout_session_id=${checkoutSessionId}`);
+        const response = await fetch(
+          `/api/conference/payment/verify?checkout_session_id=${checkoutSessionId}`
+        );
         const data = await response.json();
-        
+
         if (data.success) {
           setPaymentData(data.data);
         } else {
-          setError(data.error || 'Payment verification failed');
+          setError(data.error || "Payment verification failed");
         }
       } catch (error) {
-        console.error('Payment verification error:', error);
-        setError('Failed to verify payment status');
+        console.error("Payment verification error:", error);
+        setError("Failed to verify payment status");
       } finally {
         setIsLoading(false);
       }
@@ -59,19 +80,109 @@ export default function PaymentSuccessPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">Payment Verification Failed</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-muted-foreground">{error}</p>
-            <Button asChild>
-              <Link href="/conference">
-                Return to Registration
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-2xl w-full space-y-6">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="text-center text-orange-800">
+                Payment Verification Issue
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-orange-700 text-center">{error}</p>
+
+              <div className="text-sm text-orange-600">
+                <p>
+                  <strong>What happened?</strong>
+                </p>
+                <p>
+                  PayMongo may have redirected here without the proper session
+                  information. This can happen occasionally but doesn't mean
+                  your payment failed.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Next Steps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-medium text-blue-600">1</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">Check your email</p>
+                    <p className="text-sm text-muted-foreground">
+                      If your payment was successful, you should receive a
+                      confirmation email from both PayMongo and BEACON 2025.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-medium text-blue-600">2</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">Manual verification</p>
+                    <p className="text-sm text-muted-foreground">
+                      If you completed the payment, our team can manually verify
+                      it using your checkout session ID.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-medium text-blue-600">3</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">Contact support</p>
+                    <p className="text-sm text-muted-foreground">
+                      If you're unsure about your payment status, contact our
+                      support team with your payment reference.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button asChild className="flex-1">
+                  <Link href="/admin/test-payment-verification">
+                    Manual Verification
+                  </Link>
+                </Button>
+
+                <Button variant="outline" asChild className="flex-1">
+                  <Link href="/registration/conference">
+                    Return to Registration
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6 text-center">
+              <p className="text-sm text-blue-800">
+                <strong>Need immediate help?</strong>
+                <br />
+                Email:{" "}
+                <a href="mailto:support@beacon2025.com" className="underline">
+                  support@beacon2025.com
+                </a>
+                <br />
+                Phone:{" "}
+                <a href="tel:+639123456789" className="underline">
+                  +63 912 345 6789
+                </a>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -89,7 +200,8 @@ export default function PaymentSuccessPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-green-700">
-              Thank you for your payment. Your BEACON 2025 Conference registration is now complete.
+              Thank you for your payment. Your BEACON 2025 Conference
+              registration is now complete.
             </p>
           </CardContent>
         </Card>
@@ -103,26 +215,36 @@ export default function PaymentSuccessPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Registration ID:</span>
+                  <span className="text-muted-foreground">
+                    Registration ID:
+                  </span>
                   <p className="font-medium">{paymentData.conferenceId}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Amount Paid:</span>
-                  <p className="font-medium">₱{paymentData.totalAmount?.toLocaleString()}</p>
+                  <p className="font-medium">
+                    ₱{paymentData.totalAmount?.toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Payment Method:</span>
-                  <p className="font-medium">{paymentData.paymentMethod || 'Online Payment'}</p>
+                  <p className="font-medium">
+                    {paymentData.paymentMethod || "Online Payment"}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Payment Date:</span>
-                  <p className="font-medium">{new Date().toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {new Date().toLocaleDateString()}
+                  </p>
                 </div>
               </div>
 
               {paymentData.referenceNumber && (
                 <div>
-                  <span className="text-muted-foreground">Reference Number:</span>
+                  <span className="text-muted-foreground">
+                    Reference Number:
+                  </span>
                   <p className="font-mono text-sm bg-gray-100 p-2 rounded">
                     {paymentData.referenceNumber}
                   </p>
@@ -141,14 +263,17 @@ export default function PaymentSuccessPage() {
             <Alert>
               <Mail className="h-4 w-4" />
               <AlertDescription>
-                A confirmation email with your registration details and event tickets has been sent to your registered email address.
+                A confirmation email with your registration details and event
+                tickets has been sent to your registered email address.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-                <span>Check your email for the confirmation and event details</span>
+                <span>
+                  Check your email for the confirmation and event details
+                </span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
@@ -170,7 +295,7 @@ export default function PaymentSuccessPage() {
               Return Home
             </Link>
           </Button>
-          
+
           <Button variant="outline" asChild>
             <Link href="/profile" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />

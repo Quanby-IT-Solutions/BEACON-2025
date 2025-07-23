@@ -47,8 +47,8 @@ export async function createCheckoutSession(params: {
     amount,
     currency = 'PHP',
     description = 'BEACON 2025 Conference Registration',
-    success_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/conference/payment/success`,
-    cancel_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/conference/payment/cancel`,
+    success_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/success`,
+    cancel_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/cancel`,
     metadata = {}
   } = params;
 
@@ -150,7 +150,7 @@ export async function attachPaymentMethod(paymentIntentId: string, paymentMethod
     data: {
       attributes: {
         payment_method: paymentMethodId,
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/conference/payment/return`,
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/success`,
       }
     }
   };

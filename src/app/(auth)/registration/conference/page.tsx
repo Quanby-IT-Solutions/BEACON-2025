@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -10,33 +13,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
-
-// Import types and hooks
+import { Form } from "@/components/ui/form";
 import {
   ConferenceRegistrationFormData,
   conferenceRegistrationSchema,
   defaultConferenceRegistrationValues,
-  ConferenceFormStep,
-  conferenceFormSteps,
 } from "@/types/conference/registration";
 import { useConferenceRegistrationMutation } from "@/hooks/tanstasck-query/useConferenceRegistrationMutation";
-import {
-  useConferenceRegistrationStore,
-  useConferenceFormNavigation,
-} from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
+import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
+import { useEmailValidation } from "@/hooks/tanstasck-query/useEmailValidation";
 
-// Import form step components
+// Import all conference components (keeping the existing ones)
 import MaritimeMembership from "./conference-components/MaritimeMembership";
 import EventSelection from "./conference-components/EventSelection";
 import PersonalInformation from "./conference-components/PersonalInformation";
@@ -45,245 +41,361 @@ import ProfessionalInformation from "./conference-components/ProfessionalInforma
 import InterestsAndPreferences from "./conference-components/InterestsAndPreferences";
 import PaymentDetails from "./conference-components/PaymentDetails";
 import ConsentAndConfirmation from "./conference-components/ConsentAndConfirmation";
-import RegistrationSummary from "./conference-components/RegistrationSummary";
-import ConferenceRegistrationProgress from "./components/ConferenceRegistrationProgress";
-import ConferenceDraftManager from "./components/ConferenceDraftManager";
+import { RegistrationProgress } from "./components/RegistrationProgress";
+import { DraftManager } from "./components/DraftManager";
 
-export default function ConferenceRegistrationPage() {
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [registrationData, setRegistrationData] = useState<any>(null);
+interface ConferenceRegistrationState {
+  isSubmitting: boolean;
+  showSuccessDialog: boolean;
+  registrationData: {
+    conferenceId: string;
+    userId: string;
+    requiresPayment: boolean;
+    totalAmount: number;
+    paymongoCheckoutUrl?: string;
+  } | null;
+}
 
-  // Form setup
+export default function ConferenceRegistrationSinglePage() {
+  const {
+    clearFormData,
+    requiresPayment,
+  } = useConferenceRegistrationStore();
+
+  const { mutate: registerForConference, isPending } = useConferenceRegistrationMutation();
+
+  // Local state for single page registration
+  const [state, setState] = React.useState<ConferenceRegistrationState>({
+    isSubmitting: false,
+    showSuccessDialog: false,
+    registrationData: null,
+  });
+
   const form = useForm<ConferenceRegistrationFormData>({
     resolver: zodResolver(conferenceRegistrationSchema) as any,
     defaultValues: defaultConferenceRegistrationValues,
     mode: "onChange",
   });
 
-  // Hooks
-  const { mutate: registerForConference, isPending } =
-    useConferenceRegistrationMutation();
-  const {
-    currentStep,
-    currentStepIndex,
-    steps,
-    canGoNext,
-    canGoPrev,
-    goToNextStep,
-    goToPrevStep,
-    getStepProgress,
-  } = useConferenceFormNavigation();
-  const { clearFormData, requiresPayment } = useConferenceRegistrationStore();
+  const email = form.watch("email");
+  const isMaritimeLeagueMember = form.watch("isMaritimeLeagueMember");
+  const { data: emailCheck } = useEmailValidation(email);
 
-  // Handle form submission
-  const onSubmit = async (data: ConferenceRegistrationFormData) => {
+  // Trigger validation when maritime league membership changes
+  useEffect(() => {
+    if (isMaritimeLeagueMember) {
+      form.trigger(["tmlMemberCode"]);
+    }
+  }, [isMaritimeLeagueMember, form]);
+
+  // Function to scroll to first error field
+  const scrollToFirstError = useCallback(() => {
+    const errors = form.formState.errors;
+    const errorFields = Object.keys(errors);
+
+    if (errorFields.length > 0) {
+      const firstErrorField = errorFields[0];
+
+      // Find the input element by name attribute
+      const inputElement = document.querySelector(
+        `[name="${firstErrorField}"]`
+      );
+
+      if (inputElement) {
+        // Scroll to the element
+        inputElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+
+        // Focus the input if it's focusable
+        if (typeof (inputElement as HTMLElement).focus === "function") {
+          setTimeout(() => (inputElement as HTMLElement).focus(), 300);
+        }
+
+        // Show toast with error message
+        const errorMessage =
+          errors[firstErrorField as keyof typeof errors]?.message;
+        toast.error("Please check required fields", {
+          description: `${errorMessage || `${firstErrorField} is required`}`,
+          duration: 4000,
+        });
+      } else {
+        // Fallback: look for error message elements
+        const errorMessage = document.querySelector(".text-destructive");
+        if (errorMessage) {
+          errorMessage.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+
+          toast.error("Please check required fields", {
+            description: "Some fields need your attention.",
+            duration: 4000,
+          });
+        }
+      }
+    }
+  }, [form.formState.errors]);
+
+  const onSubmit = async (values: ConferenceRegistrationFormData) => {
+    // Prevent multiple submissions
+    if (state.isSubmitting || isPending) return;
+
+    // Prevent submission if email exists
+    if (emailCheck?.exists) {
+      form.setError("email", {
+        type: "manual",
+        message: "Email already exists. Please use a different email.",
+      });
+      setTimeout(scrollToFirstError, 100);
+      return;
+    }
+
+    setState(prev => ({ ...prev, isSubmitting: true }));
+
     try {
-      console.log("Submitting conference registration:", data);
-
-      registerForConference(data, {
-        onSuccess: (response) => {
-          console.log("Registration successful:", response);
-          setRegistrationData(response);
+      console.log("Starting conference registration submission...");
+      
+      registerForConference(values, {
+        onSuccess: (result) => {
+          console.log("Conference registration successful!", result);
 
           // Handle PayMongo payment redirection
-          if (response.data?.paymongoCheckoutUrl && requiresPayment) {
-            // Redirect to PayMongo checkout for GCash/Card payments
-            window.location.href = response.data.paymongoCheckoutUrl;
+          if (result.data?.paymongoCheckoutUrl && requiresPayment) {
+            // Store data and redirect to PayMongo
+            setState(prev => ({
+              ...prev,
+              registrationData: result.data,
+              isSubmitting: false
+            }));
+            
+            toast.success("Registration Created!", {
+              description: "Redirecting to payment...",
+              duration: 3000,
+            });
+
+            // Redirect to PayMongo checkout
+            setTimeout(() => {
+              window.location.href = result.data.paymongoCheckoutUrl!;
+            }, 1500);
             return;
           }
 
-          setIsSuccessOpen(true);
+          // Store registration data for success dialog
+          setState(prev => ({
+            ...prev,
+            registrationData: result.data,
+            showSuccessDialog: true,
+            isSubmitting: false
+          }));
 
-          // Clear form data after successful submission
-          clearFormData();
-          form.reset();
-
-          toast.success("Conference Registration Successful!", {
+          // Show success toast
+          toast.success("🎉 Conference Registration Complete!", {
             description: requiresPayment
-              ? "Please proceed with payment to complete your registration."
-              : "Your registration has been completed successfully.",
+              ? "Payment completed successfully!"
+              : "Your registration has been submitted successfully as a TML member!",
+            duration: 5000,
           });
+
+          form.reset();
+          clearFormData();
         },
         onError: (error) => {
-          console.error("Registration failed:", error);
-          toast.error("Registration Failed", {
-            description: "Please check your information and try again.",
+          console.error("Conference registration failed:", error);
+          
+          // Parse error message for better user feedback
+          let errorMessage = "An unexpected error occurred. Please try again.";
+          if (error.message.includes("already has a conference registration")) {
+            errorMessage = "You have already registered for this conference.";
+          } else if (error.message.includes("Validation failed")) {
+            errorMessage = "Please check your form data and try again.";
+          } else if (error.message.includes("payment")) {
+            errorMessage = "There was an issue processing your payment information.";
+          }
+
+          toast.error("Conference Registration Error", {
+            description: errorMessage,
+            duration: 5000,
           });
+
+          setTimeout(scrollToFirstError, 100);
+          setState(prev => ({ ...prev, isSubmitting: false }));
         },
       });
+
     } catch (error) {
-      console.error("Form submission error:", error);
+      console.error("Conference registration submission error:", error);
+      setState(prev => ({ ...prev, isSubmitting: false }));
     }
   };
-
-  // Render current step component
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case "membership":
-        return <MaritimeMembership form={form} />;
-      case "events":
-        return <EventSelection form={form} />;
-      case "personal":
-        return <PersonalInformation form={form} />;
-      case "contact":
-        return <ContactDetails form={form} />;
-      case "professional":
-        return <ProfessionalInformation form={form} />;
-      case "interests":
-        return <InterestsAndPreferences form={form} />;
-      case "payment":
-        return <PaymentDetails form={form} />;
-      case "consent":
-        return <ConsentAndConfirmation form={form} />;
-      case "review":
-        return <RegistrationSummary form={form} />;
-      default:
-        return <MaritimeMembership form={form} />;
-    }
-  };
-
-  // Get current step info
-  const currentStepInfo = conferenceFormSteps.find(
-    (step) => step.step === currentStep
-  );
-  const isLastStep = currentStep === "review";
-  const isFirstStep = currentStep === "membership";
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto py-4 px-4 max-w-4xl flex-1 flex flex-col mb-[35dvh]">
+      <div className="container mx-auto py-4 px-4 max-w-4xl flex-1 flex flex-col">
         <Card className="relative flex-1 flex flex-col h-full">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
+          <CardHeader className="shrink-0">
+            <CardTitle className="text-2xl text-center">
               BEACON 2025 Conference Registration
             </CardTitle>
-            <CardDescription>
-              {currentStepInfo?.title} - {currentStepInfo?.description}
+            <CardDescription className="text-center">
+              Register for the premier maritime industry conference
             </CardDescription>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                Step {currentStepIndex + 1} of {steps.length}
-              </span>
-              <span>{Math.round(getStepProgress())}% Complete</span>
-            </div>
           </CardHeader>
-
           <CardContent className="flex-1 overflow-hidden flex flex-col">
-            {/* Draft Manager */}
-            <ConferenceDraftManager form={form} />
-
-            {/* Scrollable Form Area */}
+            <div className="mb-4 shrink-0">
+              <DraftManager form={form} />
+            </div>
             <div className="flex-1 overflow-y-auto pb-32">
               <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-8"
-                >
-                  {/* Render Current Step */}
-                  <div className="space-y-6">{renderCurrentStep()}</div>
-
-                  {/* Navigation Buttons */}
-                  <div className="flex items-center justify-between pt-8 border-t">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={goToPrevStep}
-                      disabled={isFirstStep || isPending}
-                      className="flex items-center gap-2"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center gap-4">
-                      {!isLastStep ? (
-                        <Button
-                          type="button"
-                          onClick={goToNextStep}
-                          disabled={!canGoNext || isPending}
-                          className="flex items-center gap-2"
-                        >
-                          Next
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          type="submit"
-                          disabled={isPending}
-                          className="flex items-center gap-2"
-                        >
-                          {isPending ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              Complete Registration
-                              <CheckCircle className="h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      )}
+                <div className="relative p-2">
+                  {(state.isSubmitting || isPending) && (
+                    <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 flex items-center justify-center">
+                      <div className="text-center space-y-2">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                        <p className="text-sm font-medium">
+                          {state.registrationData?.paymongoCheckoutUrl 
+                            ? "Redirecting to Payment..." 
+                            : "Submitting Registration..."
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Please do not close this window
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </form>
+                  )}
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                      console.log("Form validation errors:", errors);
+                      setTimeout(scrollToFirstError, 100);
+                    })}
+                    className="space-y-8"
+                  >
+                    {/* Maritime League Membership */}
+                    <MaritimeMembership form={form} />
+
+                    {/* Event Selection */}
+                    <EventSelection form={form} />
+
+                    {/* Personal Information */}
+                    <PersonalInformation form={form} />
+
+                    {/* Contact Details */}
+                    <ContactDetails form={form} />
+
+                    {/* Professional Information */}
+                    <ProfessionalInformation form={form} />
+
+                    {/* Areas of Interest */}
+                    <InterestsAndPreferences form={form} />
+
+                    {/* Payment Details - Only show if payment required */}
+                    <PaymentDetails form={form} />
+
+                    {/* Consent & Confirmation */}
+                    <ConsentAndConfirmation form={form} />
+
+                    <div className="space-y-4 pb-8">
+                      <Button
+                        type="submit"
+                        className="w-full cursor-pointer"
+                        size="lg"
+                        disabled={
+                          state.isSubmitting ||
+                          isPending ||
+                          emailCheck?.exists
+                        }
+                      >
+                        {state.isSubmitting || isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {requiresPayment ? "Processing Payment..." : "Registering..."}
+                          </>
+                        ) : emailCheck?.exists ? (
+                          "Email Already Exists - Cannot Submit"
+                        ) : (
+                          <>
+                            {requiresPayment ? "Complete Registration & Pay" : "Complete Registration"}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               </Form>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Fixed Progress Bar */}
-      <ConferenceRegistrationProgress form={form} />
+      <RegistrationProgress form={form} />
 
       {/* Success Dialog */}
-      <AlertDialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
+      <AlertDialog 
+        open={state.showSuccessDialog} 
+        onOpenChange={(open) => setState(prev => ({ ...prev, showSuccessDialog: open }))}
+      >
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">
               Registration Successful!
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4">
-              <p>Thank you for registering for BEACON 2025 Conference.</p>
-
-              {registrationData && (
-                <div className="space-y-2 text-left">
-                  <p>
-                    <strong>Registration ID:</strong>{" "}
-                    {registrationData.data?.conferenceId}
-                  </p>
-                  <p>
-                    <strong>Total Amount:</strong> ₱
-                    {registrationData.data?.totalAmount?.toLocaleString() ||
-                      "0"}
-                  </p>
-
-                  {registrationData.data?.requiresPayment ? (
-                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Payment Required:</strong> Please proceed with
-                        payment to complete your registration.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <p className="text-sm text-green-800">
-                        <strong>TML Member:</strong> Your registration is
-                        complete with no payment required.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <p className="text-sm text-muted-foreground">
-                A confirmation email has been sent to your registered email
-                address.
-              </p>
+            <AlertDialogDescription className="text-center">
+              🎉 Welcome to BEACON 2025 Conference! Your registration has been completed successfully.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="text-center space-y-3 px-6 pb-2">
+            <div className="text-sm text-muted-foreground">
+              {requiresPayment 
+                ? "Your payment has been processed and you will receive a confirmation email shortly."
+                : "As a TML member, your registration is complete with no payment required. You will receive a confirmation email shortly."
+              }
+            </div>
+            {state.registrationData && (
+              <div className="bg-gray-50 rounded-lg p-3 text-xs text-left">
+                <div>
+                  <span className="font-medium">Conference ID:</span>{" "}
+                  {state.registrationData.conferenceId.slice(0, 8)}...
+                </div>
+                <div>
+                  <span className="font-medium">User ID:</span>{" "}
+                  {state.registrationData.userId.slice(0, 8)}...
+                </div>
+                {state.registrationData.totalAmount > 0 && (
+                  <div>
+                    <span className="font-medium">Amount:</span>{" "}
+                    ₱{state.registrationData.totalAmount.toLocaleString()}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              Save this information for your records.
+            </div>
+          </div>
+          
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setState({
+                  isSubmitting: false,
+                  showSuccessDialog: false,
+                  registrationData: null,
+                });
+                // Optionally redirect to a thank you page or home
+                window.location.href = "/";
+              }}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              Continue to Homepage
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

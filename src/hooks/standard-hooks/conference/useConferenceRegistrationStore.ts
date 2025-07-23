@@ -30,7 +30,7 @@ interface ConferenceRegistrationStore {
 
   // Draft saving for better UX
   saveDraft: () => void;
-  loadDraft: () => void;
+  loadDraft: () => Partial<ConferenceRegistrationFormData>;
   hasDraft: boolean;
 
   // Payment state
