@@ -17,10 +17,10 @@ const eventUpdateSchema = z.object({
 // GET - Get single event by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
 
     const event = await prisma.events.findUnique({
       where: { id: eventId },
@@ -66,10 +66,10 @@ export async function GET(
 // PUT - Update single event by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
     const body = await request.json();
 
     const validatedData = eventUpdateSchema.parse(body);
@@ -132,10 +132,10 @@ export async function PUT(
 // DELETE - Delete single event by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
 
     // Check if event exists
     const existingEvent = await prisma.events.findUnique({

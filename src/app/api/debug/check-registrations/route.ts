@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
         Conferences: true
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       },
       take: 5
     });
@@ -101,8 +101,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Debug registrations error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to fetch registrations',
         details: error instanceof Error ? error.message : String(error)
       },
