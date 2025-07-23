@@ -1,14 +1,12 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm ci --force",
-  "build": {
-    "env": {
-      "NEXT_TELEMETRY_DISABLED": "1"
+    "buildCommand": "npm run build",
+    "installCommand": "npm ci --force",
+    "build": {
+        "env": {
+            "NEXT_TELEMETRY_DISABLED": "1"
+        }
+    },
+    "functions": {
+        "app/**/*.{js,ts,jsx,tsx}": {}
     }
-  },
-  "functions": {
-    "app/**/*.{js,ts,jsx,tsx}": {
-      "memory": 3008
-    }
-  }
 }
