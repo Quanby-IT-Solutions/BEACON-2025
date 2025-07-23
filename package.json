@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "npm rebuild lightningcss --platform=linux --arch=x64 || true",
-    "vercel-build": "npm run build"
+    "postinstall": "npm rebuild lightningcss --platform=linux --arch=x64 || true"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
