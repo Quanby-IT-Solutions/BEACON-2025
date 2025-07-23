@@ -150,13 +150,13 @@ function PaymentSuccessContent() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button asChild className="flex-1">
+                {/* <Button asChild className="flex-1">
                   <Link href="/admin/test-payment-verification">
                     Manual Verification
                   </Link>
-                </Button>
+                </Button> */}
 
-                <Button variant="outline" asChild className="flex-1">
+                <Button variant="outline" asChild className="w-full">
                   <Link href="/registration/conference">
                     Return to Registration
                   </Link>

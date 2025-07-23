@@ -1,0 +1,130 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+
+const prisma = new PrismaClient();
+
+// Middleware to verify admin token
+function verifyAdminToken(authHeader: string | null) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('No valid authorization header');
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Verify admin authentication
+    const authHeader = request.headers.get('authorization');
+    const decoded = verifyAdminToken(authHeader);
+
+    // Fetch all visitors with their user details and accounts
+    const visitors = await prisma.visitors.findMany({
+      include: {
+        user: {
+          include: {
+            UserDetails: true,
+            UserAccounts: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Transform the data to make it easier to work with
+    const transformedVisitors = visitors.map((visitor) => ({
+      id: visitor.id,
+      createdAt: visitor.createdAt,
+      updatedAt: visitor.updatedAt,
+
+      // Personal Information
+      personalInfo: {
+        firstName: visitor.user?.UserDetails?.[0]?.firstName || '',
+        lastName: visitor.user?.UserDetails?.[0]?.lastName || '',
+        middleName: visitor.user?.UserDetails?.[0]?.middleName || '',
+        suffix: visitor.user?.UserDetails?.[0]?.suffix || '',
+        preferredName: visitor.user?.UserDetails?.[0]?.preferredName || '',
+        gender: visitor.user?.UserDetails?.[0]?.gender || '',
+        genderOthers: visitor.user?.UserDetails?.[0]?.genderOthers || '',
+        ageBracket: visitor.user?.UserDetails?.[0]?.ageBracket || '',
+        nationality: visitor.user?.UserDetails?.[0]?.nationality || '',
+        faceScannedUrl: visitor.user?.UserDetails?.[0]?.faceScannedUrl || '',
+      },
+
+      // Contact Information
+      contactInfo: {
+        email: visitor.user?.UserAccounts?.[0]?.email || '',
+        mobileNumber: visitor.user?.UserAccounts?.[0]?.mobileNumber || '',
+        landline: visitor.user?.UserAccounts?.[0]?.landline || '',
+        mailingAddress: visitor.user?.UserAccounts?.[0]?.mailingAddress || '',
+        status: visitor.user?.UserAccounts?.[0]?.status || '',
+      },
+
+      // Professional Information
+      professionalInfo: {
+        jobTitle: visitor.jobTitle,
+        companyName: visitor.companyName,
+        industry: visitor.industry,
+        industryOthers: visitor.industryOthers,
+        companyAddress: visitor.companyAddress,
+        companyWebsite: visitor.companyWebsite,
+        businessEmail: visitor.businessEmail,
+      },
+
+      // Event Information
+      eventInfo: {
+        attendingDays: visitor.attendingDays,
+        eventParts: visitor.eventParts,
+        attendeeType: visitor.attendeeType,
+        interestAreas: visitor.interestAreas,
+        receiveUpdates: visitor.receiveUpdates,
+        inviteToFutureEvents: visitor.inviteToFutureEvents,
+      },
+
+      // Emergency & Safety
+      emergencyInfo: {
+        specialAssistance: visitor.specialAssistance,
+        emergencyContactPerson: visitor.emergencyContactPerson,
+        emergencyContactNumber: visitor.emergencyContactNumber,
+      },
+
+      // Consent & Marketing
+      consentInfo: {
+        dataPrivacyConsent: visitor.dataPrivacyConsent,
+        hearAboutEvent: visitor.hearAboutEvent,
+        hearAboutOthers: visitor.hearAboutOthers,
+      },
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: transformedVisitors,
+      count: transformedVisitors.length,
+    });
+
+  } catch (error) {
+    console.error('Admin visitors fetch error:', error);
+
+    if (error instanceof Error) {
+      if (error.message.includes('token') || error.message.includes('authorization')) {
+        return NextResponse.json({
+          success: false,
+          message: 'Unauthorized',
+        }, { status: 401 });
+      }
+    }
+
+    return NextResponse.json({
+      success: false,
+      message: 'Internal server error',
+    }, { status: 500 });
+  }
+}

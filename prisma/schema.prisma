@@ -140,6 +140,17 @@ enum ConferenceInterestArea {
 //=================================
 // MODELS
 //=================================
+model ManagerAccount {
+  id        String        @id @default(uuid())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  username  String        @unique
+  password  String // Store hashed password
+  status    ManagerStatus
+  isActive  Boolean       @default(true)
+
+  @@map("manager_accounts")
+}
 
 model User {
   id           String         @id @default(cuid())
@@ -365,4 +376,9 @@ enum EventStatusEnum {
   WORKSHOP
   SEMINAR
   EXHIBITION
+}
+
+enum ManagerStatus {
+  SUPERADMIN
+  ADMIN
 }

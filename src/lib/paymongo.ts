@@ -15,7 +15,7 @@ const authHeader = Buffer.from(`${PAYMONGO_SECRET_KEY}:`).toString('base64');
 // Helper function to make PayMongo API requests
 async function paymongoRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${PAYMONGO_BASE_URL}${endpoint}`;
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -205,7 +205,7 @@ export function validateWebhookSignature(
     .createHmac('sha256', webhookSecret)
     .update(payload)
     .digest('hex');
-  
+
   return crypto.timingSafeEqual(
     Buffer.from(signature),
     Buffer.from(expectedSignature)
@@ -228,7 +228,7 @@ export class PayMongoError extends Error {
 // Helper function to handle PayMongo webhook events
 export function parseWebhookEvent(payload: any) {
   const { data } = payload;
-  
+
   return {
     id: data.id,
     type: data.type,

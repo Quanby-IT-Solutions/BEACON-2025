@@ -12,6 +12,8 @@
 
 # npm i zustand
 
+# npm install --save-dev ts-node typescript tsconfig-paths
+
 <!--
 Workflow Summary
 Supabase → Streams DB changes via WebSockets.
