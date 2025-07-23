@@ -2,30 +2,44 @@
 
 import { useEffect, useRef } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Calendar, MapPin, DollarSign, Clock, Users, Info } from "lucide-react";
+import {
+  Loader2,
+  Calendar,
+  MapPin,
+  DollarSign,
+  Clock,
+  Users,
+  Info,
+} from "lucide-react";
 import { EventSelectionProps } from "@/types/conference/components";
-import { useActiveEventsQuery, useEventSelection } from "@/hooks/tanstasck-query/useEventsQuery";
+import {
+  useActiveEventsQuery,
+  useEventSelection,
+} from "@/hooks/tanstasck-query/useEventsQuery";
 import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
 
 export default function EventSelection({ form }: EventSelectionProps) {
-  const { 
-    updateSelectedEvents, 
-    selectedEvents, 
-    totalAmount,
-    requiresPayment
-  } = useConferenceRegistrationStore();
+  const { updateSelectedEvents, selectedEvents, totalAmount, requiresPayment } =
+    useConferenceRegistrationStore();
 
-  const { 
-    events = [], 
-    isLoading, 
-    error, 
+  const {
+    events = [],
+    isLoading,
+    error,
     calculateTotalPrice,
-    getEventsByIds
+    getEventsByIds,
   } = useEventSelection();
 
   // Watch selected event IDs
@@ -36,25 +50,28 @@ export default function EventSelection({ form }: EventSelectionProps) {
   useEffect(() => {
     // Create a string representation to compare
     const currentSelection = selectedEventIds.sort().join(",");
-    
+
     // Only update if the selection actually changed
     if (currentSelection !== previousSelectionRef.current) {
       previousSelectionRef.current = currentSelection;
-      
+
       if (selectedEventIds.length > 0 && events.length > 0) {
         const selected = getEventsByIds(selectedEventIds);
-        const eventsWithDetails = selected.map(event => ({
+        const eventsWithDetails = selected.map((event) => ({
           id: event.id,
           name: event.eventName,
-          price: Number(event.eventPrice)
+          price: Number(event.eventPrice),
         }));
-        
+
         updateSelectedEvents(eventsWithDetails);
-        
+
         // Calculate total with conference discount logic
-        const total = calculateTotalWithConferenceDiscount(selectedEventIds, events);
+        const total = calculateTotalWithConferenceDiscount(
+          selectedEventIds,
+          events
+        );
         form.setValue("totalPaymentAmount", total);
-        
+
         // Update the store's totalAmount directly with the discounted amount
         useConferenceRegistrationStore.setState({ totalAmount: total });
       } else {
@@ -66,47 +83,66 @@ export default function EventSelection({ form }: EventSelectionProps) {
   }, [selectedEventIds, events]); // Only depend on the actual data, not the functions
 
   // Calculate total with conference discount logic
-  const calculateTotalWithConferenceDiscount = (selectedIds: string[], allEvents: any[]) => {
+  const calculateTotalWithConferenceDiscount = (
+    selectedIds: string[],
+    allEvents: any[]
+  ) => {
     if (!selectedIds.length || !allEvents.length) return 0;
-    
+
     const selectedEvents = getEventsByIds(selectedIds);
-    
+
     // Get all CONFERENCE events
-    const conferenceEvents = allEvents.filter(event => event.eventStatus === 'CONFERENCE');
-    const selectedConferenceEvents = selectedEvents.filter(event => event.eventStatus === 'CONFERENCE');
-    
+    const conferenceEvents = allEvents.filter(
+      (event) => event.eventStatus === "CONFERENCE"
+    );
+    const selectedConferenceEvents = selectedEvents.filter(
+      (event) => event.eventStatus === "CONFERENCE"
+    );
+
     // Calculate base total
-    let total = selectedEvents.reduce((sum, event) => sum + Number(event.eventPrice), 0);
-    
+    let total = selectedEvents.reduce(
+      (sum, event) => sum + Number(event.eventPrice),
+      0
+    );
+
     // Apply discount if ALL conference events are selected
-    if (conferenceEvents.length === 3 && selectedConferenceEvents.length === 3) {
+    if (
+      conferenceEvents.length === 3 &&
+      selectedConferenceEvents.length === 3
+    ) {
       total -= 1500; // Apply 1500 discount for selecting all 3 conference events
     }
-    
+
     return total;
   };
 
   const formatPrice = (price: number) => {
-    return price === 0 ? 'FREE' : `₱${price.toLocaleString()}`;
+    return price === 0 ? "FREE" : `₱${price.toLocaleString()}`;
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getEventStatusColor = (status: string) => {
     switch (status) {
-      case 'CONFERENCE': return 'bg-blue-100 text-blue-800';
-      case 'SHOW': return 'bg-purple-100 text-purple-800';
-      case 'WORKSHOP': return 'bg-green-100 text-green-800';
-      case 'SEMINAR': return 'bg-yellow-100 text-yellow-800';
-      case 'EXHIBITION': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "CONFERENCE":
+        return "bg-blue-100 text-blue-800";
+      case "SHOW":
+        return "bg-purple-100 text-purple-800";
+      case "WORKSHOP":
+        return "bg-green-100 text-green-800";
+      case "SEMINAR":
+        return "bg-yellow-100 text-yellow-800";
+      case "EXHIBITION":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -140,7 +176,8 @@ export default function EventSelection({ form }: EventSelectionProps) {
           Event Selection
         </h3>
         <p className="text-sm text-muted-foreground">
-          Choose the events you'd like to attend at BEACON 2025.
+          Choose the events you'd like to attend at BEACON 2025. ( has discount
+          if you select all 3 conference events )
         </p>
       </div>
 
@@ -149,8 +186,9 @@ export default function EventSelection({ form }: EventSelectionProps) {
         <Alert className="border-yellow-200 bg-yellow-50">
           <DollarSign className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-800">
-            <strong>Payment Required:</strong> As a non-TML member, you'll need to pay for selected events. 
-            TML members enjoy free access to all events.
+            <strong>Payment Required:</strong> As a non-TML member, you'll need
+            to pay for selected events. TML members enjoy free access to all
+            events.
           </AlertDescription>
         </Alert>
       )}
@@ -160,7 +198,8 @@ export default function EventSelection({ form }: EventSelectionProps) {
         <Alert className="border-green-200 bg-green-50">
           <Users className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            <strong>TML Member Benefit:</strong> All events are free for verified TML members!
+            <strong>TML Member Benefit:</strong> All events are free for
+            verified TML members!
           </AlertDescription>
         </Alert>
       )}
@@ -178,75 +217,90 @@ export default function EventSelection({ form }: EventSelectionProps) {
               <FormMessage />
             </div>
             <FormDescription>
-              Select one or more events you'd like to attend. You can modify your selection later.
+              Select one or more events you'd like to attend. You can modify
+              your selection later.
             </FormDescription>
             <FormControl>
               <div className="grid grid-cols-1 gap-4">
                 {events
                   .sort((a, b) => a.eventName.localeCompare(b.eventName))
                   .map((event) => (
-                  <Card key={event.id} className="relative hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2">
-                          <FormField
-                            control={form.control}
-                            name="selectedEventIds"
-                            render={({ field }) => {
-                              return (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(event.id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentValues = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...currentValues, event.id]);
-                                        } else {
-                                          field.onChange(
-                                            currentValues.filter((value) => value !== event.id)
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                          <div className="flex-1">
-                            <CardTitle className="text-base leading-tight">
-                              {event.eventName}
-                            </CardTitle>
+                    <Card
+                      key={event.id}
+                      className="relative hover:shadow-md transition-shadow"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-2">
+                            <FormField
+                              control={form.control}
+                              name="selectedEventIds"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(
+                                          event.id
+                                        )}
+                                        onCheckedChange={(checked) => {
+                                          const currentValues =
+                                            field.value || [];
+                                          if (checked) {
+                                            field.onChange([
+                                              ...currentValues,
+                                              event.id,
+                                            ]);
+                                          } else {
+                                            field.onChange(
+                                              currentValues.filter(
+                                                (value) => value !== event.id
+                                              )
+                                            );
+                                          }
+                                        }}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                            <div className="flex-1">
+                              <CardTitle className="text-base leading-tight">
+                                {event.eventName}
+                              </CardTitle>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={getEventStatusColor(event.eventStatus)}
+                              variant="secondary"
+                            >
+                              {event.eventStatus}
+                            </Badge>
+                            <Badge variant="outline" className="font-semibold">
+                              {formatPrice(Number(event.eventPrice))}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={getEventStatusColor(event.eventStatus)} variant="secondary">
-                            {event.eventStatus}
-                          </Badge>
-                          <Badge variant="outline" className="font-semibold">
-                            {formatPrice(Number(event.eventPrice))}
-                          </Badge>
+                      </CardHeader>
+
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            {formatDate(new Date(event.eventDate))}
+                          </div>
+
+                          {event.description && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {event.description}
+                            </p>
+                          )}
                         </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          {formatDate(new Date(event.eventDate))}
-                        </div>
-                        
-                        {event.description && (
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {event.description}
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
             </FormControl>
           </FormItem>
@@ -262,10 +316,13 @@ export default function EventSelection({ form }: EventSelectionProps) {
                 <Users className="h-4 w-4" />
                 Selected Events ({selectedEventIds.length})
               </h4>
-              
+
               <div className="space-y-2">
                 {selectedEvents.map((event) => (
-                  <div key={event.id} className="flex items-center justify-between text-sm">
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span className="text-blue-800">{event.name}</span>
                     <span className="font-medium text-blue-900">
                       {formatPrice(event.price)}
@@ -277,29 +334,46 @@ export default function EventSelection({ form }: EventSelectionProps) {
               <div className="border-t border-blue-200 pt-3">
                 {/* Show discount breakdown if applicable */}
                 {(() => {
-                  const conferenceEvents = events.filter(event => event.eventStatus === 'CONFERENCE');
-                  const selectedConferenceEvents = selectedEvents.filter(event => {
-                    const eventData = events.find(e => e.id === event.id);
-                    return eventData?.eventStatus === 'CONFERENCE';
-                  });
-                  const hasConferenceDiscount = conferenceEvents.length === 3 && selectedConferenceEvents.length === 3;
-                  const subtotal = selectedEvents.reduce((sum, event) => sum + event.price, 0);
-                  
+                  const conferenceEvents = events.filter(
+                    (event) => event.eventStatus === "CONFERENCE"
+                  );
+                  const selectedConferenceEvents = selectedEvents.filter(
+                    (event) => {
+                      const eventData = events.find((e) => e.id === event.id);
+                      return eventData?.eventStatus === "CONFERENCE";
+                    }
+                  );
+                  const hasConferenceDiscount =
+                    conferenceEvents.length === 3 &&
+                    selectedConferenceEvents.length === 3;
+                  const subtotal = selectedEvents.reduce(
+                    (sum, event) => sum + event.price,
+                    0
+                  );
+
                   if (hasConferenceDiscount && requiresPayment) {
                     return (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-blue-800">Subtotal:</span>
-                          <span className="text-blue-800">{formatPrice(subtotal)}</span>
+                          <span className="text-blue-800">
+                            {formatPrice(subtotal)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-green-800">All Conference Events Discount:</span>
+                          <span className="text-green-800">
+                            All Conference Events Discount:
+                          </span>
                           <span className="text-green-800">-₱1,500</span>
                         </div>
                         <div className="border-t border-blue-200 pt-2">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold text-blue-900">Total Amount:</span>
-                            <span className="text-lg font-bold text-blue-900">{formatPrice(totalAmount)}</span>
+                            <span className="font-semibold text-blue-900">
+                              Total Amount:
+                            </span>
+                            <span className="text-lg font-bold text-blue-900">
+                              {formatPrice(totalAmount)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -307,9 +381,13 @@ export default function EventSelection({ form }: EventSelectionProps) {
                   } else {
                     return (
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-blue-900">Total Amount:</span>
+                        <span className="font-semibold text-blue-900">
+                          Total Amount:
+                        </span>
                         <span className="text-lg font-bold text-blue-900">
-                          {requiresPayment ? formatPrice(totalAmount) : 'FREE (TML Member)'}
+                          {requiresPayment
+                            ? formatPrice(totalAmount)
+                            : "FREE (TML Member)"}
                         </span>
                       </div>
                     );

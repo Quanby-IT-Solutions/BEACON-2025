@@ -31,6 +31,7 @@ interface ConferenceAPIError {
 const registerForConference = async (data: ConferenceRegistrationFormData): Promise<ConferenceRegistrationResponse> => {
   console.log("Sending conference registration data:", data);
 
+  // Fallback to old approach due to PayMongo 500 errors
   const response = await fetch("/api/conference", {
     method: "POST",
     headers: {

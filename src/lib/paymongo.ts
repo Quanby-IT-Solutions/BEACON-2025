@@ -42,6 +42,18 @@ export async function createCheckoutSession(params: {
   success_url?: string;
   cancel_url?: string;
   metadata?: Record<string, any>;
+  line_items?: Array<{
+    currency: string;
+    amount: number;
+    description: string;
+    name: string;
+    quantity: number;
+  }>;
+  customer?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
 }) {
   const {
     amount,
@@ -49,7 +61,9 @@ export async function createCheckoutSession(params: {
     description = 'BEACON 2025 Conference Registration',
     success_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/success`,
     cancel_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/cancel`,
-    metadata = {}
+    metadata = {},
+    line_items,
+    customer
   } = params;
 
   const checkoutData = {
@@ -59,7 +73,7 @@ export async function createCheckoutSession(params: {
         show_description: true,
         show_line_items: true,
         description,
-        line_items: [
+        line_items: line_items || [
           {
             currency,
             amount,
@@ -72,6 +86,13 @@ export async function createCheckoutSession(params: {
         success_url,
         cancel_url,
         metadata,
+        ...(customer && {
+          billing: {
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+          }
+        }),
       }
     }
   };

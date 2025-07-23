@@ -117,6 +117,8 @@ export const defaultConferenceRegistrationValues: ConferenceRegistrationFormData
   selectedEventIds: [],
   faceScannedUrl: "",
 
+
+
   // UserDetails fields
   firstName: "Aj",
   lastName: "Comahes",
@@ -134,7 +136,7 @@ export const defaultConferenceRegistrationValues: ConferenceRegistrationFormData
   mailingAddress: '123 Main St, City, Country',
 
   // Conference fields
-  isMaritimeLeagueMember: MaritimeLeagueMembership.NO,
+  isMaritimeLeagueMember: MaritimeLeagueMembership.NO || 'NO',
   tmlMemberCode: null,
 
   // Professional Information

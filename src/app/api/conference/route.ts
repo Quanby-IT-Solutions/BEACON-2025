@@ -239,15 +239,52 @@ export async function POST(request: NextRequest) {
 
     if (requiresPayment && calculatedAmount > 0) {
       try {
-        // Create PayMongo checkout session
+        // Create detailed line items for PayMongo
+        const lineItems = selectedEvents.map(event => ({
+          currency: 'PHP',
+          amount: phpToCentavos(Number(event.eventPrice)),
+          description: `${event.eventName} - ${event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}`,
+          name: event.eventName,
+          quantity: 1,
+        }));
+
+        // Add discount line item if applicable
+        const conferenceEvents = selectedEvents.filter(event => event.eventStatus === 'CONFERENCE');
+        if (conferenceEvents.length === 3) {
+          const totalConferenceEvents = await prisma.events.count({
+            where: {
+              eventStatus: 'CONFERENCE',
+              isActive: true
+            }
+          });
+
+          // Don't add negative line items - PayMongo doesn't support them
+          // Discount is already applied to calculatedAmount
+        }
+
+        // Create PayMongo checkout session with detailed information
+        let paymentDescription = `BEACON 2025 Conference Registration - ${firstName} ${lastName}`;
+        if (conferenceEvents.length === 3) {
+          paymentDescription += ` (₱1,500 Conference Package Discount Applied)`;
+        }
+        
         const checkoutSessionData = await createCheckoutSession({
           amount: phpToCentavos(calculatedAmount),
-          description: `BEACON 2025 Conference Registration - ${selectedEvents.length} events`,
+          description: paymentDescription,
+          line_items: lineItems,
+          customer: {
+            name: `${firstName} ${lastName}`,
+            email: email,
+            phone: mobileNumber,
+          },
           metadata: {
             conferenceRegistration: true,
             eventCount: selectedEvents.length,
             isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember,
             email: email,
+            firstName: firstName,
+            lastName: lastName,
+            eventNames: selectedEvents.map(e => e.eventName).join(', '),
           }
         });
 
@@ -320,29 +357,38 @@ export async function POST(request: NextRequest) {
 
     // Create payment record if payment is required
     if (requiresPayment && calculatedAmount > 0) {
+      const paymentMode = conferenceData.paymentMode || 'GCASH';
+      const isWalkInPayment = paymentMode === 'WALK_IN_ON_SITE';
+      
       await prisma.conferencePayment.create({
         data: {
           conferenceId: conference.id,
           totalAmount: calculatedAmount,
-          paymentMode: conferenceData.paymentMode || 'GCASH', // Use selected payment mode from form
+          paymentMode: paymentMode,
+          // Walk-in payments start as PENDING (awaiting on-site payment)
+          // Online payments start as PENDING (awaiting PayMongo confirmation)
           paymentStatus: 'PENDING',
           customPaymentAmount: conferenceData.customPaymentAmount,
           
-          // PayMongo integration fields
+          // PayMongo integration fields (only for online payments)
           paymongoCheckoutId: paymongoCheckoutSession?.id || null,
-          paymongoPaymentId: null, // Will be filled by webhook
+          paymongoPaymentId: null, // Will be filled by webhook/verification
           paymongoIntentId: paymongoCheckoutSession?.attributes?.payment_intent_id || null,
           paymongoWebhookId: null, // Will be filled by webhook
           paymongoPaymentMethod: null, // Will be filled by webhook
           paymongoReferenceId: null, // Will be filled by webhook
           
           // Payment confirmation
-          isPaid: false,
+          isPaid: false, // Will be set to true when payment is confirmed
           paymentConfirmedAt: null,
           paymentConfirmedBy: null,
           
-          // Notes
-          notes: paymongoCheckoutSession ? 'PayMongo checkout session created' : 'Manual payment processing',
+          // Notes based on payment type
+          notes: isWalkInPayment 
+            ? 'Walk-in payment - Awaiting on-site payment confirmation'
+            : paymongoCheckoutSession 
+              ? 'Online payment - PayMongo checkout session created, awaiting payment confirmation'
+              : 'Manual payment processing required',
         }
       });
     }

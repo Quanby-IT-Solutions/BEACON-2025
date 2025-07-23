@@ -42,11 +42,11 @@ export default function PaymentSuccessPage() {
       return;
     }
 
-    // Verify payment status with backend
+    // Verify payment status with backend (NEW: Payment-first approach)
     const verifyPayment = async () => {
       try {
         const response = await fetch(
-          `/api/conference/payment/verify?checkout_session_id=${checkoutSessionId}`
+          `/api/conference/payment/success-verify?checkout_session_id=${checkoutSessionId}`
         );
         const data = await response.json();
 

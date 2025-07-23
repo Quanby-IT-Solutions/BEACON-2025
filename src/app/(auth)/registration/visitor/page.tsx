@@ -297,14 +297,15 @@ export default function VisitorRegistrationPage() {
               Registration Successful!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              🎉 Welcome to BEACON 2025! Your registration has been completed successfully.
+              🎉 Welcome to BEACON 2025! Your registration has been completed
+              successfully.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
+
           <div className="text-center space-y-3 px-6 pb-2">
             <div className="text-sm text-muted-foreground">
-              You will receive a confirmation email shortly with your registration
-              details and event information.
+              You will receive a confirmation email shortly with your
+              registration details and event information.
             </div>
             {registrationData && (
               <div className="bg-gray-50 rounded-lg p-3 text-xs text-left">
@@ -322,14 +323,14 @@ export default function VisitorRegistrationPage() {
               Save this information for your records.
             </div>
           </div>
-          
+
           <AlertDialogFooter>
             <AlertDialogAction
               onClick={() => {
                 setShowSuccessDialog(false);
                 resetVisitorStore(); // Reset all Zustand state
                 // Optionally redirect to a thank you page or home
-                window.location.href = "/";
+                window.location.href = "/https://www.thebeaconexpo.com/";
               }}
               className="w-full bg-green-600 hover:bg-green-700"
             >

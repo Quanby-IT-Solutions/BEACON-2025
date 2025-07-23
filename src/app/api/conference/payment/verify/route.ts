@@ -54,18 +54,21 @@ export async function GET(request: NextRequest) {
         
         // Check if payment was successful
         if (checkoutSession.attributes.payment_status === 'paid') {
+          const paymentData = checkoutSession.attributes.payments?.[0]?.attributes;
+          
           // Update payment status in database
           await prisma.conferencePayment.update({
             where: { id: payment.id },
             data: {
               isPaid: true,
               paymentConfirmedAt: new Date(),
-              paymentConfirmedBy: 'api_verification',
+              paymentConfirmedBy: 'automatic_verification',
               paymentStatus: 'CONFIRMED',
+              paymentDate: new Date(), // Set actual payment date
               paymongoPaymentId: checkoutSession.attributes.payments?.[0]?.id || null,
-              paymongoPaymentMethod: checkoutSession.attributes.payments?.[0]?.attributes?.payment_method_type || null,
-              paymongoReferenceId: checkoutSession.attributes.payments?.[0]?.attributes?.reference_number || null,
-              notes: `Payment confirmed via API verification - ${new Date().toISOString()}`
+              paymongoPaymentMethod: paymentData?.payment_method_type || null,
+              paymongoReferenceId: paymentData?.reference_number || null,
+              notes: `Online payment automatically confirmed via API verification at ${new Date().toISOString()}`
             }
           });
 
