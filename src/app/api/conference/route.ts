@@ -1,46 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { createCheckoutSession, phpToCentavos } from '@/lib/paymongo';
 
 const prisma = new PrismaClient();
 
-// Validation schema for conference registration
+// Validation schema for conference registration API (aligned with actual Prisma schema)
 const conferenceRegistrationSchema = z.object({
-  // Maritime League Membership
-  isMaritimeLeagueMember: z.enum(['YES', 'NO', 'APPLY_FOR_MEMBERSHIP']),
-  tmlMemberCode: z.string().optional(),
+  // Form-only fields (for processing, not stored in any model directly)
+  selectedEventIds: z.array(z.string()).min(1, 'Please select at least one event'),
+  faceScannedUrl: z.string().min(1, 'Face capture is required'),
 
-  // Event Registration
-  registerForConference: z.boolean(),
-  registerBoatShow: z.boolean().default(false),
-  registerBlueRunway: z.boolean().default(false),
-
-  // Conference Registration (if selected)
-  conferenceDuration: z.enum(['ONE_DAY', 'TWO_DAYS', 'THREE_DAYS']).optional(),
-  attendingDay1: z.boolean().default(false),
-  attendingDay2: z.boolean().default(false),
-  attendingDay3: z.boolean().default(false),
-
-  // Personal Information
-  fullName: z.string().min(1, 'Full name is required'),
-  preferredName: z.string().optional(),
+  // UserDetails fields (matches Prisma UserDetails model)
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  middleName: z.string().optional().nullable(),
+  suffix: z.string().optional().nullable(),
+  preferredName: z.string().optional().nullable(),
   gender: z.enum(['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY', 'OTHERS']),
+  genderOthers: z.string().optional().nullable(),
   ageBracket: z.enum(['UNDER_18', 'AGE_18_24', 'AGE_25_34', 'AGE_35_44', 'AGE_45_54', 'AGE_55_ABOVE']),
   nationality: z.string().min(1, 'Nationality is required'),
 
-  // Contact Details
+  // UserAccounts fields (matches Prisma UserAccounts model)
   email: z.string().email('Valid email is required'),
   mobileNumber: z.string().min(1, 'Mobile number is required'),
-  mailingAddress: z.string().optional(),
+  mailingAddress: z.string().optional().nullable(),
 
-  // Professional Information
-  jobTitle: z.string().optional(),
-  companyName: z.string().optional(),
-  industry: z.string().optional(),
-  companyAddress: z.string().optional(),
-  companyWebsite: z.string().optional(),
+  // Conference model fields (matches actual Prisma Conference model)
+  isMaritimeLeagueMember: z.enum(['YES', 'NO', 'APPLY_FOR_MEMBERSHIP']),
+  tmlMemberCode: z.string().optional().nullable(),
 
-  // Areas of Interest
+  // Professional Information (Conference model fields)
+  jobTitle: z.string().optional().nullable(),
+  companyName: z.string().optional().nullable(),
+  industry: z.string().optional().nullable(),
+  companyAddress: z.string().optional().nullable(),
+  companyWebsite: z.string().optional().nullable(),
+
+  // Areas of Interest (Conference model fields)
   interestAreas: z.array(z.enum([
     'SHIPBUILDING_SHIP_REPAIR',
     'BOATBUILDING_YACHT_BUILDING',
@@ -52,15 +50,16 @@ const conferenceRegistrationSchema = z.object({
     'LIFESTYLE_FASHION',
     'WOMEN_YOUTH_IN_MARITIME',
     'OTHERS'
-  ])),
-  otherInterests: z.string().optional(),
+  ])).min(1, 'Please select at least one interest area'),
+  otherInterests: z.string().optional().nullable(),
   receiveEventInvites: z.boolean().default(false),
 
-  // Payment Details
-  totalPaymentAmount: z.number().optional(),
-  customPaymentAmount: z.string().optional(),
+  // Payment Details (Conference model fields)
+  totalPaymentAmount: z.number().optional().nullable(),
+  customPaymentAmount: z.string().optional().nullable(),
+  paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH', 'WALK_IN_ON_SITE']).optional().nullable(),
 
-  // Consent & Confirmation
+  // Consent & Confirmation (Conference model fields)
   emailCertificate: z.boolean().default(false),
   photoVideoConsent: z.boolean().default(false),
   dataUsageConsent: z.boolean().refine(val => val === true, 'Data usage consent is required'),
@@ -72,12 +71,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = conferenceRegistrationSchema.parse(body);
 
+    // Separate data for different models
+    const {
+      selectedEventIds,
+      faceScannedUrl,
+      // UserDetails fields
+      firstName,
+      lastName,
+      middleName,
+      suffix,
+      preferredName,
+      gender,
+      genderOthers,
+      ageBracket,
+      nationality,
+      // UserAccounts fields
+      email,
+      mobileNumber,
+      mailingAddress,
+      // Everything else goes to Conference model
+      ...conferenceData
+    } = validatedData;
+
     // Check if user already has a registration
     const existingUser = await prisma.user.findFirst({
       where: {
         UserAccounts: {
           some: {
-            email: validatedData.email
+            email: email
           }
         }
       },
@@ -104,25 +125,60 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Update existing user data if needed
+      if (userAccount) {
+        await prisma.userAccounts.update({
+          where: { id: userAccount.id },
+          data: {
+            email,
+            mobileNumber,
+            mailingAddress
+          }
+        });
+      }
+
+      if (userDetails) {
+        await prisma.userDetails.update({
+          where: { id: userDetails.id },
+          data: {
+            firstName,
+            lastName,
+            middleName,
+            suffix,
+            preferredName,
+            gender,
+            genderOthers,
+            ageBracket,
+            nationality,
+            faceScannedUrl: faceScannedUrl || undefined
+          }
+        });
+      }
     } else {
       // Create new user with accounts and details
       user = await prisma.user.create({
         data: {
           UserAccounts: {
             create: {
-              email: validatedData.email,
-              mobileNumber: validatedData.mobileNumber,
+              email,
+              mobileNumber,
+              mailingAddress,
               status: 'ACTIVE'
             }
           },
           UserDetails: {
             create: {
-              firstName: validatedData.fullName.split(' ')[0],
-              lastName: validatedData.fullName.split(' ').slice(1).join(' ') || validatedData.fullName.split(' ')[0],
-              preferredName: validatedData.preferredName,
-              gender: validatedData.gender,
-              ageBracket: validatedData.ageBracket,
-              nationality: validatedData.nationality
+              firstName,
+              lastName,
+              middleName,
+              suffix,
+              preferredName,
+              gender,
+              genderOthers,
+              ageBracket,
+              nationality,
+              faceScannedUrl: faceScannedUrl || undefined
             }
           }
         },
@@ -136,66 +192,97 @@ export async function POST(request: NextRequest) {
       userDetails = user.UserDetails[0];
     }
 
-    // Determine if payment is required (non-maritime league members)
-    const requiresPayment = validatedData.isMaritimeLeagueMember === 'NO';
-
-    // Calculate total payment amount
+    // Calculate total payment amount based on selected events
     let calculatedAmount = 0;
-    if (validatedData.registerForConference && validatedData.conferenceDuration) {
-      switch (validatedData.conferenceDuration) {
-        case 'ONE_DAY':
-          calculatedAmount += 3000;
-          break;
-        case 'TWO_DAYS':
-          calculatedAmount += 6000;
-          break;
-        case 'THREE_DAYS':
-          calculatedAmount += 7500;
-          break;
+    let selectedEvents: any[] = [];
+
+    if (selectedEventIds && selectedEventIds.length > 0) {
+      // Fetch selected events from database
+      selectedEvents = await prisma.events.findMany({
+        where: {
+          id: {
+            in: selectedEventIds
+          },
+          isActive: true
+        }
+      });
+
+      // Calculate total amount from selected events
+      calculatedAmount = selectedEvents.reduce((total, event) => {
+        return total + Number(event.eventPrice);
+      }, 0);
+
+      // Apply conference discount if all 3 CONFERENCE events are selected
+      const conferenceEvents = selectedEvents.filter(event => event.eventStatus === 'CONFERENCE');
+      if (conferenceEvents.length === 3) {
+        // Check if there are exactly 3 CONFERENCE events available in total
+        const totalConferenceEvents = await prisma.events.count({
+          where: {
+            eventStatus: 'CONFERENCE',
+            isActive: true
+          }
+        });
+
+        if (totalConferenceEvents === 3) {
+          calculatedAmount -= 1500; // Apply 1500 discount for selecting all 3 conference events
+        }
       }
     }
-    if (validatedData.registerBlueRunway) {
-      calculatedAmount += 2000;
+
+    // Determine if payment is required (non-maritime league members)
+    const requiresPayment = conferenceData.isMaritimeLeagueMember === 'NO' && calculatedAmount > 0;
+
+    // Create PayMongo checkout session if payment is required
+    let paymongoCheckoutSession: any = null;
+    let paymentToken: string | null = null;
+    let paymentTokenExpiry: Date | null = null;
+
+    if (requiresPayment && calculatedAmount > 0) {
+      try {
+        // Create PayMongo checkout session
+        const checkoutSessionData = await createCheckoutSession({
+          amount: phpToCentavos(calculatedAmount),
+          description: `BEACON 2025 Conference Registration - ${selectedEvents.length} events`,
+          metadata: {
+            conferenceRegistration: true,
+            eventCount: selectedEvents.length,
+            isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember,
+            email: email,
+          }
+        });
+
+        paymongoCheckoutSession = checkoutSessionData;
+        
+        // Generate fallback payment token for non-PayMongo payments
+        paymentToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        paymentTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours for checkout session
+      } catch (error) {
+        console.error('PayMongo checkout session creation failed:', error);
+        // Fallback to manual payment processing
+        paymentToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        paymentTokenExpiry = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours for manual payment
+      }
     }
 
-    // Generate payment token if payment is required
-    const paymentToken = requiresPayment ? `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null;
-    const paymentTokenExpiry = requiresPayment ? new Date(Date.now() + 3 * 60 * 60 * 1000) : null; // 3 hours
-
-    // Create conference registration
+    // Create conference registration (only conference-specific fields)
     const conference = await prisma.conference.create({
       data: {
         userId: user.id,
-        isMaritimeLeagueMember: validatedData.isMaritimeLeagueMember,
-        tmlMemberCode: validatedData.tmlMemberCode,
-        registerForConference: validatedData.registerForConference,
-        registerBoatShow: validatedData.registerBoatShow,
-        registerBlueRunway: validatedData.registerBlueRunway,
-        conferenceDuration: validatedData.conferenceDuration,
-        attendingDay1: validatedData.attendingDay1,
-        attendingDay2: validatedData.attendingDay2,
-        attendingDay3: validatedData.attendingDay3,
-        fullName: validatedData.fullName,
-        preferredName: validatedData.preferredName,
-        gender: validatedData.gender,
-        ageBracket: validatedData.ageBracket,
-        nationality: validatedData.nationality,
-        email: validatedData.email,
-        mobileNumber: validatedData.mobileNumber,
-        mailingAddress: validatedData.mailingAddress,
-        jobTitle: validatedData.jobTitle,
-        companyName: validatedData.companyName,
-        industry: validatedData.industry,
-        companyAddress: validatedData.companyAddress,
-        companyWebsite: validatedData.companyWebsite,
-        interestAreas: validatedData.interestAreas,
-        otherInterests: validatedData.otherInterests,
-        receiveEventInvites: validatedData.receiveEventInvites,
+        isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember,
+        tmlMemberCode: conferenceData.tmlMemberCode,
+        jobTitle: conferenceData.jobTitle,
+        companyName: conferenceData.companyName,
+        industry: conferenceData.industry,
+        companyAddress: conferenceData.companyAddress,
+        companyWebsite: conferenceData.companyWebsite,
+        interestAreas: conferenceData.interestAreas,
+        otherInterests: conferenceData.otherInterests,
+        receiveEventInvites: conferenceData.receiveEventInvites || false,
         totalPaymentAmount: calculatedAmount,
-        customPaymentAmount: validatedData.customPaymentAmount,
-        emailCertificate: validatedData.emailCertificate,
-        photoVideoConsent: validatedData.photoVideoConsent,
-        dataUsageConsent: validatedData.dataUsageConsent,
+        customPaymentAmount: conferenceData.customPaymentAmount,
+        emailCertificate: conferenceData.emailCertificate || false,
+        photoVideoConsent: conferenceData.photoVideoConsent || false,
+        dataUsageConsent: conferenceData.dataUsageConsent,
         paymentToken,
         paymentTokenExpiry,
         requiresPayment,
@@ -206,9 +293,30 @@ export async function POST(request: NextRequest) {
             UserAccounts: true,
             UserDetails: true
           }
+        },
+        summaryOfPayments: {
+          include: {
+            event: true
+          }
         }
       }
     });
+
+    // Create summary of payments entries for selected events
+    if (selectedEvents.length > 0) {
+      const summaryEntries = selectedEvents.map(event => ({
+        conferenceId: conference.id,
+        eventId: event.id,
+        eventName: event.eventName,
+        eventDate: event.eventDate,
+        eventPrice: event.eventPrice,
+        eventStatus: event.eventStatus,
+      }));
+
+      await prisma.summaryOfPayments.createMany({
+        data: summaryEntries
+      });
+    }
 
     // Create payment record if payment is required
     if (requiresPayment && calculatedAmount > 0) {
@@ -216,10 +324,25 @@ export async function POST(request: NextRequest) {
         data: {
           conferenceId: conference.id,
           totalAmount: calculatedAmount,
-          paymentMode: 'BANK_DEPOSIT_TRANSFER', // Default, can be updated later
+          paymentMode: conferenceData.paymentMode || 'GCASH', // Use selected payment mode from form
           paymentStatus: 'PENDING',
-          conferenceAmount: validatedData.registerForConference ? (calculatedAmount - (validatedData.registerBlueRunway ? 2000 : 0)) : null,
-          blueRunwayAmount: validatedData.registerBlueRunway ? 2000 : null,
+          customPaymentAmount: conferenceData.customPaymentAmount,
+          
+          // PayMongo integration fields
+          paymongoCheckoutId: paymongoCheckoutSession?.id || null,
+          paymongoPaymentId: null, // Will be filled by webhook
+          paymongoIntentId: paymongoCheckoutSession?.attributes?.payment_intent_id || null,
+          paymongoWebhookId: null, // Will be filled by webhook
+          paymongoPaymentMethod: null, // Will be filled by webhook
+          paymongoReferenceId: null, // Will be filled by webhook
+          
+          // Payment confirmation
+          isPaid: false,
+          paymentConfirmedAt: null,
+          paymentConfirmedBy: null,
+          
+          // Notes
+          notes: paymongoCheckoutSession ? 'PayMongo checkout session created' : 'Manual payment processing',
         }
       });
     }
@@ -232,7 +355,11 @@ export async function POST(request: NextRequest) {
         requiresPayment,
         totalAmount: calculatedAmount,
         paymentToken,
-        paymentTokenExpiry
+        paymentTokenExpiry,
+        // PayMongo integration data
+        paymongoCheckoutId: paymongoCheckoutSession?.id || null,
+        paymongoCheckoutUrl: paymongoCheckoutSession?.attributes?.checkout_url || null,
+        paymentMethods: requiresPayment ? ['gcash', 'card', 'paymaya', 'bank_transfer', 'walk_in'] : null,
       }
     }, { status: 201 });
 
@@ -289,7 +416,12 @@ export async function GET(request: NextRequest) {
             UserDetails: true
           }
         },
-        payment: true
+        ConferencePayment: true,
+        summaryOfPayments: {
+          include: {
+            event: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -339,7 +471,12 @@ export async function PUT(request: NextRequest) {
             UserDetails: true
           }
         },
-        payment: true
+        ConferencePayment: true,
+        summaryOfPayments: {
+          include: {
+            event: true
+          }
+        }
       }
     });
 

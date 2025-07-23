@@ -1,0 +1,295 @@
+"use client";
+
+import { UseFormReturn } from "react-hook-form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Camera, User } from "lucide-react";
+import {
+  genderOptions,
+  ageBracketOptions,
+} from "@/types/conference/registration";
+import { PersonalInformationProps } from "@/types/conference/components";
+
+// Reuse visitor face capture components
+import { FaceCapture } from "../../visitor/components/FaceCapture";
+
+export default function PersonalInformation({
+  form,
+}: PersonalInformationProps) {
+  const handleFaceCapture = (imageDataUrl: string) => {
+    // Store the captured image in the form
+    form.setValue("faceScannedUrl", imageDataUrl);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <User className="h-5 w-5 text-blue-600" />
+          Personal Information
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Please provide your personal details for registration.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {/* Name Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>First Name *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    placeholder="First name"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Last Name *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    placeholder="Last name"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="middleName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Middle Name</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    value={field.value || ""}
+                    placeholder="Middle name (optional)"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="suffix"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Suffix</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    value={field.value || ""}
+                    placeholder="Jr., Sr., III, etc. (optional)"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Preferred Name */}
+          <FormField
+            control={form.control}
+            name="preferredName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Preferred Name</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="How would you like to be called?"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {/* Nationality */}
+          <FormField
+            control={form.control}
+            name="nationality"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Nationality *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., Filipino, American, etc."
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Gender */}
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Gender *</FormLabel>
+                  <FormMessage />
+                </div>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {genderOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          {/* Age Bracket */}
+          <FormField
+            control={form.control}
+            name="ageBracket"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Age Bracket *</FormLabel>
+                  <FormMessage />
+                </div>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select age bracket" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {ageBracketOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Gender Others field - conditionally shown */}
+        {form.watch("gender") === "OTHERS" && (
+          <FormField
+            control={form.control}
+            name="genderOthers"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Please specify *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    value={field.value || ""}
+                    placeholder="Please specify your gender"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* Face Capture Section */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Camera className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Photo Capture *</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Please capture a clear photo of yourself for identification purposes.
+              </p>
+              
+              {/* Use the advanced FaceCapture component */}
+              <FaceCapture 
+                onCapture={handleFaceCapture}
+                capturedImage={form.watch("faceScannedUrl")}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hidden field for face scan URL */}
+        <FormField
+          control={form.control}
+          name="faceScannedUrl"
+          render={({ field }) => (
+            <input type="hidden" {...field} value={field.value || ""} />
+          )}
+        />
+      </div>
+    </div>
+  );
+}

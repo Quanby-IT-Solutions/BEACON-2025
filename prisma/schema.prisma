@@ -111,12 +111,6 @@ enum MaritimeLeagueMembership {
   APPLY_FOR_MEMBERSHIP
 }
 
-enum ConferenceDuration {
-  ONE_DAY // ₱3,000
-  TWO_DAYS // ₱6,000
-  THREE_DAYS // ₱7,500
-}
-
 enum PaymentMode {
   BANK_DEPOSIT_TRANSFER
   GCASH
@@ -155,21 +149,22 @@ model User {
   UserDetails  UserDetails[]
   Visitors     Visitors[]
   Conferences  Conference[]
+
+  CodeDistribution CodeDistribution[]
 }
 
 model UserAccounts {
-  id               String       @id @default(uuid())
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
-  status           ActiveStatus @default(PENDING)
-  userId           String
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id             String       @id @default(uuid())
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  status         ActiveStatus @default(PENDING)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 2: Account Details
-  email            String       @unique
-  mobileNumber     String
-  landline         String?
-  faceScanningFile String?
-  identification   String?
+  email          String       @unique
+  mobileNumber   String
+  mailingAddress String?
+  landline       String?
 }
 
 model UserDetails {
@@ -240,46 +235,23 @@ model Conference {
   isMaritimeLeagueMember MaritimeLeagueMembership
   tmlMemberCode          String?
 
-  // Section 2: Event Registration
-  registerForConference Boolean @default(false)
-  registerBoatShow      Boolean @default(false) // FREE but registration required
-  registerBlueRunway    Boolean @default(false) // ₱2,000
-
-  // Section 3: Conference Registration (if selected)
-  conferenceDuration ConferenceDuration?
-  attendingDay1      Boolean             @default(false) // Sept 29
-  attendingDay2      Boolean             @default(false) // Sept 30
-  attendingDay3      Boolean             @default(false) // Oct 1
-
-  // Section 4: Personal Information
-  fullName      String
-  preferredName String?
-  gender        Gender
-  ageBracket    AgeBracket
-  nationality   String
-
-  // Section 5: Contact Details
-  email          String
-  mobileNumber   String
-  mailingAddress String?
-
-  // Section 6: Professional Information
+  // Section 3: Professional Information
   jobTitle       String?
   companyName    String?
   industry       String?
   companyAddress String?
   companyWebsite String?
 
-  // Section 7: Areas of Interest
+  // Section 4: Areas of Interest
   interestAreas       ConferenceInterestArea[]
   otherInterests      String?
   receiveEventInvites Boolean                  @default(false)
 
-  // Section 8: Payment Details (calculated field based on selections)
+  // Section 5: Payment Details (calculated field based on selections)
   totalPaymentAmount  Decimal?
   customPaymentAmount String? // For "Other amount" field
 
-  // Section 9: Consent & Confirmation
+  // Section 6: Consent & Confirmation
   emailCertificate  Boolean @default(false)
   photoVideoConsent Boolean @default(false)
   dataUsageConsent  Boolean // Required field
@@ -290,8 +262,10 @@ model Conference {
   requiresPayment    Boolean   @default(false) // Based on maritime league membership
 
   // Relations
-  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  payment ConferencePayment?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  ConferencePayment ConferencePayment?
+  summaryOfPayments SummaryOfPayments[] // One-to-many with selected events
 
   @@map("conferences")
 }
@@ -325,10 +299,6 @@ model ConferencePayment {
   paymentConfirmedAt DateTime? // When payment was confirmed
   paymentConfirmedBy String? // webhook, manual, etc.
 
-  // Payment Breakdown - Conference Specific
-  conferenceAmount Decimal? // Amount for conference days (₱3,000/₱6,000/₱7,500)
-  blueRunwayAmount Decimal? // Amount for Blue Runway Fashion Show (₱2,000)
-
   // Payment Notes
   notes String?
 
@@ -336,4 +306,63 @@ model ConferencePayment {
   conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("conference_payments")
+}
+
+model SummaryOfPayments {
+  id           String          @id @default(uuid())
+  eventName    String
+  eventDate    DateTime
+  eventPrice   Decimal
+  eventStatus  EventStatusEnum
+  conferenceId String
+  eventId      String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  event      Events     @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Prevent duplicate event selections for same conference
+  @@unique([conferenceId, eventId])
+  @@map("summary_of_payments")
+}
+
+model Events {
+  id          String          @id @default(uuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  eventName   String
+  eventDate   DateTime
+  eventPrice  Decimal
+  eventStatus EventStatusEnum
+  isActive    Boolean         @default(true)
+  description String?
+
+  // Relations
+  summaryOfPayments SummaryOfPayments[]
+
+  @@map("events")
+}
+
+model CodeDistribution {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  code      String   @unique
+  isActive  Boolean  @default(false)
+  userId    String? // User ID who used the code
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("code_distribution")
+}
+
+enum EventStatusEnum {
+  CONFERENCE
+  SHOW
+  WORKSHOP
+  SEMINAR
+  EXHIBITION
 }

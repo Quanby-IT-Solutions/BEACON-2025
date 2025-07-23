@@ -2,16 +2,17 @@
 import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea } from "@prisma/client";
 import { z } from "zod";
 
-// Base registration schema without the refine logic first
-export const baseRegistrationSchema = z.object({
+
+// Base schema without conditional validation
+export const baseVisitorSchema = z.object({
   // Personal Information (UserDetails)
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  middleName: z.string().optional(),
-  suffix: z.string().optional(),
-  preferredName: z.string().optional(),
+  middleName: z.string().optional().nullable(),
+  suffix: z.string().optional().nullable(),
+  preferredName: z.string().optional().nullable(),
   gender: z.nativeEnum(Gender),
-  genderOthers: z.string().optional(),
+  genderOthers: z.string().optional().nullable(),
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
   faceScannedUrl: z.string().min(1, "Face capture is required"),
@@ -19,16 +20,16 @@ export const baseRegistrationSchema = z.object({
   // Account Details (UserAccounts)
   email: z.string().email("Invalid email format"),
   mobileNumber: z.string().min(1, "Mobile number is required"),
-  landline: z.string().optional(),
+  landline: z.string().optional().nullable(),
 
-  // Professional Information (Visitors) - Conditional based on attendeeType
-  jobTitle: z.string().optional(),
-  companyName: z.string().optional(),
-  industry: z.nativeEnum(Industry).optional(),
-  industryOthers: z.string().optional(),
-  companyAddress: z.string().optional(),
-  companyWebsite: z.string().optional(),
-  businessEmail: z.string().email().optional().or(z.literal("")),
+  // Professional Information (Visitors) - All optional initially
+  jobTitle: z.string().optional().nullable(),
+  companyName: z.string().optional().nullable(),
+  industry: z.nativeEnum(Industry).optional().nullable(),
+  industryOthers: z.string().optional().nullable(),
+  companyAddress: z.string().optional().nullable(),
+  companyWebsite: z.string().optional().nullable(),
+  businessEmail: z.string().email().optional().nullable().or(z.literal("")),
 
   // Interests & Preferences
   attendingDays: z.array(z.nativeEnum(EventDay)).min(1, "Select at least one attending day"),
@@ -39,18 +40,18 @@ export const baseRegistrationSchema = z.object({
   inviteToFutureEvents: z.boolean(),
 
   // Accessibility & Safety
-  specialAssistance: z.string().optional(),
+  specialAssistance: z.string().optional().nullable(),
   emergencyContactPerson: z.string().min(1, "Emergency contact person is required"),
   emergencyContactNumber: z.string().min(1, "Emergency contact number is required"),
 
   // Consent
   dataPrivacyConsent: z.boolean().refine(val => val === true, "Data privacy consent is required"),
   hearAboutEvent: z.nativeEnum(HearAboutEvent),
-  hearAboutOthers: z.string().optional(),
+  hearAboutOthers: z.string().optional().nullable(),
 });
 
 // Registration schema with conditional validation
-export const registrationSchema = baseRegistrationSchema
+export const registrationSchema = baseVisitorSchema
   .refine((data) => {
     // If attendee type is STUDENT_ACADEMIC, job title is optional
     if (data.attendeeType === AttendeeType.STUDENT_ACADEMIC) {
@@ -85,7 +86,7 @@ export const registrationSchema = baseRegistrationSchema
     path: ["industry"],
   });
 
-export type RegistrationFormData = z.infer<typeof baseRegistrationSchema>;
+export type RegistrationFormData = z.infer<typeof baseVisitorSchema>;
 
 // Use undefined for better form UX with selects
 export const defaultRegistrationValues: Partial<RegistrationFormData> = {

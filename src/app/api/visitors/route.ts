@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea, PrismaClient } from '@prisma/client';
+import { baseVisitorSchema } from '@/types/visitor/registration';
+
 
 const prisma = new PrismaClient();
 
@@ -10,52 +12,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Base schema without conditional validation
-const baseVisitorSchema = z.object({
-  // Personal Information (UserDetails)
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  middleName: z.string().optional().nullable(),
-  suffix: z.string().optional().nullable(),
-  preferredName: z.string().optional().nullable(),
-  gender: z.nativeEnum(Gender),
-  genderOthers: z.string().optional().nullable(),
-  ageBracket: z.nativeEnum(AgeBracket),
-  nationality: z.string().min(1, "Nationality is required"),
-  faceScannedUrl: z.string().min(1, "Face capture is required"),
 
-  // Account Details (UserAccounts)
-  email: z.string().email("Invalid email format"),
-  mobileNumber: z.string().min(1, "Mobile number is required"),
-  landline: z.string().optional().nullable(),
-
-  // Professional Information (Visitors) - All optional initially
-  jobTitle: z.string().optional().nullable(),
-  companyName: z.string().optional().nullable(),
-  industry: z.nativeEnum(Industry).optional().nullable(),
-  industryOthers: z.string().optional().nullable(),
-  companyAddress: z.string().optional().nullable(),
-  companyWebsite: z.string().optional().nullable(),
-  businessEmail: z.string().email().optional().nullable().or(z.literal("")),
-
-  // Interests & Preferences
-  attendingDays: z.array(z.nativeEnum(EventDay)).min(1, "Select at least one attending day"),
-  eventParts: z.array(z.string()).min(1, "Select at least one event part"),
-  attendeeType: z.nativeEnum(AttendeeType),
-  interestAreas: z.array(z.nativeEnum(InterestArea)).min(1, "Select at least one interest area"),
-  receiveUpdates: z.boolean(),
-  inviteToFutureEvents: z.boolean(),
-
-  // Accessibility & Safety
-  specialAssistance: z.string().optional().nullable(),
-  emergencyContactPerson: z.string().min(1, "Emergency contact person is required"),
-  emergencyContactNumber: z.string().min(1, "Emergency contact number is required"),
-
-  // Consent
-  dataPrivacyConsent: z.boolean().refine(val => val === true, "Data privacy consent is required"),
-  hearAboutEvent: z.nativeEnum(HearAboutEvent),
-  hearAboutOthers: z.string().optional().nullable(),
-});
 
 // Schema with conditional validation
 const visitorRegistrationSchema = baseVisitorSchema.refine((data) => {
