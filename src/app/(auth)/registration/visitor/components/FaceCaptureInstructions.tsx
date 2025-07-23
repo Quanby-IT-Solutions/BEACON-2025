@@ -190,20 +190,12 @@ export function FaceCaptureInstructions({
             {currentStep === 2 && (
               <div className="bg-gray-50 rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-sm font-semibold mb-3">Visual Guide:</p>
-                <div className="relative w-32 h-40 mx-auto bg-gray-200 rounded-lg overflow-hidden">
-                  {/* Simulated camera view */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-gray-300 to-gray-400" />
-
-                  {/* Oval guide */}
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-24 border-2 border-dashed border-blue-400 rounded-full opacity-80" />
-
-                  {/* Face placeholder */}
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-20 bg-orange-200 rounded-full border-2 border-green-400">
-                    <div className="absolute top-6 left-4 w-2 h-2 bg-gray-600 rounded-full" />
-                    <div className="absolute top-6 right-4 w-2 h-2 bg-gray-600 rounded-full" />
-                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-gray-600 rounded" />
-                  </div>
-
+                <div className="relative w-fit h-fit mx-auto bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src="/images/face-recognition.jpg"
+                    className="object-contain"
+                    alt=""
+                  />
                   {/* Status indicator */}
                   <Badge className="absolute top-1 left-1 text-xs bg-green-500 text-white">
                     <CheckCircle className="w-2 h-2 mr-1" />

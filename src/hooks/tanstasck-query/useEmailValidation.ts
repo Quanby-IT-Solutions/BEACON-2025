@@ -10,8 +10,8 @@ const checkEmailExists = async (email: string): Promise<EmailCheckResponse> => {
     return { exists: false, message: "" };
   }
 
-  const response = await fetch(`/api/visitors/check-email?email=${encodeURIComponent(email)}`);
-  
+  const response = await fetch(`/api/check-email?email=${encodeURIComponent(email)}`);
+
   if (!response.ok) {
     throw new Error("Failed to check email");
   }

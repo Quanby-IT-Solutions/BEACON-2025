@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RegistrationFormData } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
-import { AttendeeType } from "@/generated/prisma";
+import { AttendeeType } from "@prisma/client";
+
 
 interface ProfessionalInfoProps {
   form: UseFormReturn<RegistrationFormData>;

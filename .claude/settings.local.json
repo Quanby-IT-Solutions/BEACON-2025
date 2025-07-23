@@ -6,7 +6,13 @@
       "Bash(cd:*)",
       "Bash(ls:*)",
       "Bash(cd:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(grep:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

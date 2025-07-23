@@ -149,3 +149,6 @@ webhook.on('payment.paid', async (event) => {
   });
 });
 ```
+
+## Linting Notes
+- I have no linting I disabled it

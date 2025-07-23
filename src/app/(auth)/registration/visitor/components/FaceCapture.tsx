@@ -56,7 +56,7 @@ const useIsMobile = () => {
 
 export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
   const webcamRef = useRef<Webcam>(null);
-  
+
   // Modal States
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [showCameraModal, setShowCameraModal] = useState(false);
@@ -198,7 +198,7 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
       // More lenient tolerances for close-up faces
       const centerToleranceX = isMobile ? 80 : 120;
       const centerToleranceY = isMobile ? 60 : 100;
-      
+
       // Allow larger faces for close-up shots
       const minFaceWidth = isMobile ? 60 : 80;
       const maxFaceWidth = isMobile ? 400 : 500; // Much larger to allow close-ups
@@ -206,19 +206,23 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
       const maxFaceHeight = isMobile ? 450 : 550; // Much larger to allow close-ups
 
       // Check if face is reasonably centered
-      const isCenteredX = Math.abs(faceCenterX - ovalCenterX) <= centerToleranceX;
-      const isCenteredY = Math.abs(faceCenterY - ovalCenterY) <= centerToleranceY;
+      const isCenteredX =
+        Math.abs(faceCenterX - ovalCenterX) <= centerToleranceX;
+      const isCenteredY =
+        Math.abs(faceCenterY - ovalCenterY) <= centerToleranceY;
 
       // Check if face size is appropriate (more lenient for close-ups)
-      const isGoodWidth = faceWidth >= minFaceWidth && faceWidth <= maxFaceWidth;
-      const isGoodHeight = faceHeight >= minFaceHeight && faceHeight <= maxFaceHeight;
+      const isGoodWidth =
+        faceWidth >= minFaceWidth && faceWidth <= maxFaceWidth;
+      const isGoodHeight =
+        faceHeight >= minFaceHeight && faceHeight <= maxFaceHeight;
 
       // Check if face overlaps with oval (doesn't need to be completely inside)
       const faceLeft = faceBox.x;
       const faceRight = faceBox.x + faceBox.width;
       const faceTop = faceBox.y;
       const faceBottom = faceBox.y + faceBox.height;
-      
+
       const ovalLeft = ovalCenterX - ovalWidth / 2;
       const ovalRight = ovalCenterX + ovalWidth / 2;
       const ovalTop = ovalCenterY - ovalHeight / 2;
@@ -230,11 +234,15 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
       const overlapsOval = hasXOverlap && hasYOverlap;
 
       // Calculate overlap percentage for better feedback
-      const overlapWidth = Math.min(faceRight, ovalRight) - Math.max(faceLeft, ovalLeft);
-      const overlapHeight = Math.min(faceBottom, ovalBottom) - Math.max(faceTop, ovalTop);
-      const overlapArea = Math.max(0, overlapWidth) * Math.max(0, overlapHeight);
+      const overlapWidth =
+        Math.min(faceRight, ovalRight) - Math.max(faceLeft, ovalLeft);
+      const overlapHeight =
+        Math.min(faceBottom, ovalBottom) - Math.max(faceTop, ovalTop);
+      const overlapArea =
+        Math.max(0, overlapWidth) * Math.max(0, overlapHeight);
       const faceArea = faceWidth * faceHeight;
-      const overlapPercentage = faceArea > 0 ? (overlapArea / faceArea) * 100 : 0;
+      const overlapPercentage =
+        faceArea > 0 ? (overlapArea / faceArea) * 100 : 0;
 
       // Generate feedback based on positioning
       let feedback = "";
@@ -242,9 +250,15 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
         if (!hasXOverlap && !hasYOverlap) {
           feedback = "Position your face in the oval area";
         } else if (!hasXOverlap) {
-          feedback = faceCenterX < ovalCenterX ? "Move right into the oval" : "Move left into the oval";
+          feedback =
+            faceCenterX < ovalCenterX
+              ? "Move right into the oval"
+              : "Move left into the oval";
         } else {
-          feedback = faceCenterY < ovalCenterY ? "Move down into the oval" : "Move up into the oval";
+          feedback =
+            faceCenterY < ovalCenterY
+              ? "Move down into the oval"
+              : "Move up into the oval";
         }
       } else if (overlapPercentage < 30) {
         feedback = "Center your face better in the oval";
@@ -258,19 +272,25 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
         if (!isCenteredX && !isCenteredY) {
           feedback = "Almost perfect! Center slightly";
         } else if (!isCenteredX) {
-          feedback = faceCenterX < ovalCenterX ? "Shift slightly right" : "Shift slightly left";
+          feedback =
+            faceCenterX < ovalCenterX
+              ? "Shift slightly right"
+              : "Shift slightly left";
         } else {
-          feedback = faceCenterY < ovalCenterY ? "Shift slightly down" : "Shift slightly up";
+          feedback =
+            faceCenterY < ovalCenterY
+              ? "Shift slightly down"
+              : "Shift slightly up";
         }
       } else {
         feedback = "Perfect! Ready to capture your close-up!";
       }
 
       // More lenient positioning requirements - face just needs to overlap oval reasonably
-      const isProperlyPositioned = 
-        overlapsOval && 
+      const isProperlyPositioned =
+        overlapsOval &&
         overlapPercentage >= 25 && // At least 25% of face in oval
-        isGoodWidth && 
+        isGoodWidth &&
         isGoodHeight;
 
       return { isProperlyPositioned, feedback };
@@ -285,7 +305,9 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
   const handleWebcamCapture = useCallback(async () => {
     // If models are loaded, require proper face positioning
     if (modelsLoaded && !faceProperlyPositioned) {
-      alert(`Please position your face properly before capturing. ${positioningFeedback}`);
+      alert(
+        `Please position your face properly before capturing. ${positioningFeedback}`
+      );
       return;
     }
 
@@ -444,7 +466,10 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
               <div className="text-center space-y-4 py-8">
                 <Loader2 className="w-12 h-12 text-blue-500 mx-auto animate-spin" />
                 <p className="text-gray-600">Initializing face detection...</p>
-                <Progress value={modelLoadingProgress} className="w-64 mx-auto" />
+                <Progress
+                  value={modelLoadingProgress}
+                  className="w-64 mx-auto"
+                />
               </div>
             ) : (
               <>
@@ -470,7 +495,9 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
                     onUserMedia={handleCameraModalOpen}
                     onUserMediaError={(error) => {
                       console.error("Camera error:", error);
-                      setCameraError("Unable to access camera. Please check permissions.");
+                      setCameraError(
+                        "Unable to access camera. Please check permissions."
+                      );
                     }}
                   />
 
@@ -478,7 +505,9 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
                   {modelsLoaded && facePosition && (
                     <div
                       className={`absolute border-2 rounded-lg pointer-events-none ${
-                        faceProperlyPositioned ? "border-green-400" : "border-orange-400"
+                        faceProperlyPositioned
+                          ? "border-green-400"
+                          : "border-orange-400"
                       }`}
                       style={{
                         left: `${facePosition.x}px`,
@@ -497,23 +526,23 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
                         <div
                           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-dashed border-blue-400 rounded-full opacity-70"
                           style={{
-                            width: isMobile ? '200px' : '280px',
-                            height: isMobile ? '240px' : '320px',
+                            width: isMobile ? "200px" : "280px",
+                            height: isMobile ? "240px" : "320px",
                           }}
                         />
                         {/* Guide lines for better positioning */}
                         <div
                           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-blue-300 opacity-30"
                           style={{
-                            width: '1px',
-                            height: isMobile ? '240px' : '320px',
+                            width: "1px",
+                            height: isMobile ? "240px" : "320px",
                           }}
                         />
                         <div
                           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-blue-300 opacity-30"
                           style={{
-                            width: isMobile ? '200px' : '280px',
-                            height: '1px',
+                            width: isMobile ? "200px" : "280px",
+                            height: "1px",
                           }}
                         />
                       </>
@@ -521,7 +550,9 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
                     <div className="absolute top-2 left-2 right-2">
                       <Badge
                         variant={
-                          modelsLoaded && faceProperlyPositioned ? "default" : "secondary"
+                          modelsLoaded && faceProperlyPositioned
+                            ? "default"
+                            : "secondary"
                         }
                         className={`${
                           modelsLoaded && faceProperlyPositioned
