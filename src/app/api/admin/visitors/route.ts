@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
+import { getSession } from '@/lib/adminSessions';
 
 const prisma = new PrismaClient();
 
@@ -11,11 +11,13 @@ function verifyAdminToken(authHeader: string | null) {
   }
 
   const token = authHeader.split(' ')[1];
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
-  } catch (error) {
-    throw new Error('Invalid token');
+  const session = getSession(token);
+  
+  if (!session) {
+    throw new Error('Invalid or expired token');
   }
+  
+  return session;
 }
 
 export async function GET(request: NextRequest) {

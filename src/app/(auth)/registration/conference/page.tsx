@@ -60,6 +60,7 @@ export default function ConferenceRegistrationSinglePage() {
   const {
     clearFormData,
     requiresPayment,
+    tmlCodeValidationState,
   } = useConferenceRegistrationStore();
 
   const { mutate: registerForConference, isPending } = useConferenceRegistrationMutation();
@@ -149,6 +150,20 @@ export default function ConferenceRegistrationSinglePage() {
       form.setError("email", {
         type: "manual",
         message: "Email already exists. Please use a different email.",
+      });
+      setTimeout(scrollToFirstError, 100);
+      return;
+    }
+
+    // Prevent submission if TML code is required but invalid
+    if (tmlCodeValidationState.isRequired && !tmlCodeValidationState.isValid) {
+      form.setError("tmlMemberCode", {
+        type: "manual",
+        message: "Please enter a valid TML member code or change your membership selection.",
+      });
+      toast.error("Invalid TML Member Code", {
+        description: "Please enter a valid TML member code to proceed, or select a different membership option.",
+        duration: 5000,
       });
       setTimeout(scrollToFirstError, 100);
       return;
@@ -306,7 +321,8 @@ export default function ConferenceRegistrationSinglePage() {
                         disabled={
                           state.isSubmitting ||
                           isPending ||
-                          emailCheck?.exists
+                          emailCheck?.exists ||
+                          (tmlCodeValidationState.isRequired && !tmlCodeValidationState.isValid)
                         }
                       >
                         {state.isSubmitting || isPending ? (
@@ -316,6 +332,8 @@ export default function ConferenceRegistrationSinglePage() {
                           </>
                         ) : emailCheck?.exists ? (
                           "Email Already Exists - Cannot Submit"
+                        ) : (tmlCodeValidationState.isRequired && !tmlCodeValidationState.isValid) ? (
+                          "Enter Valid TML Code to Continue"
                         ) : (
                           <>
                             {requiresPayment ? "Complete Registration & Pay" : "Complete Registration"}

@@ -12,10 +12,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Users, LogOut, Eye, Mail, Phone } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, Users, LogOut, Eye, Mail, Phone, Trash2 } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
-import { useAdminVisitors } from "@/hooks/tanstasck-query/useAdminVisitors";
+import { useAdminVisitors, useDeleteVisitor } from "@/hooks/tanstasck-query/useAdminVisitors";
 import { useAdminLogout } from "@/hooks/tanstasck-query/useAdminAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -38,16 +50,40 @@ export default function AdminDashboard() {
   const { isAuthenticated, currentAdmin, isSessionValid } = useAdminStore();
   const logout = useAdminLogout();
   const { data: visitorsData, isLoading, error, refetch } = useAdminVisitors();
+  const deleteVisitor = useDeleteVisitor();
 
   useEffect(() => {
-    if (!isAuthenticated || !isSessionValid()) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, isSessionValid, router]);
+    // Check authentication state
+    const checkAuth = () => {
+      if (!isAuthenticated) {
+        router.push("/login");
+        return;
+      }
+      
+      // Only check session validity if we have session data
+      if (isAuthenticated && !isSessionValid()) {
+        router.push("/login");
+        return;
+      }
+    };
+
+    checkAuth();
+  }, [isAuthenticated, router]); // Removed isSessionValid from dependencies to prevent infinite loop
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleDeleteVisitor = (visitorId: string, visitorName: string) => {
+    deleteVisitor.mutate(visitorId, {
+      onSuccess: () => {
+        toast.success(`Visitor ${visitorName} deleted successfully`);
+      },
+      onError: (error) => {
+        toast.error(`Failed to delete visitor: ${error.message}`);
+      },
+    });
   };
 
   if (!isAuthenticated) {
@@ -202,13 +238,14 @@ export default function AdminDashboard() {
                             {formatDate(visitor.createdAt)}
                           </TableCell>
                           <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
-                              </DialogTrigger>
+                            <div className="flex items-center gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View
+                                  </Button>
+                                </DialogTrigger>
                               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>
@@ -440,6 +477,54 @@ export default function AdminDashboard() {
                                 </div>
                               </DialogContent>
                             </Dialog>
+                            
+                            {/* Delete button - only for SUPERADMIN */}
+                            {currentAdmin?.status === 'SUPERADMIN' && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    disabled={deleteVisitor.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Visitor</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete{" "}
+                                      <strong>
+                                        {visitor.personalInfo.firstName} {visitor.personalInfo.lastName}
+                                      </strong>
+                                      ? This action cannot be undone and will remove all associated data.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteVisitor(
+                                        visitor.id,
+                                        `${visitor.personalInfo.firstName} ${visitor.personalInfo.lastName}`
+                                      )}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      {deleteVisitor.isPending ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Deleting...
+                                        </>
+                                      ) : (
+                                        'Delete'
+                                      )}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

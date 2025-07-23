@@ -35,7 +35,8 @@ import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conferenc
 export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
   const [showCodeInput, setShowCodeInput] = useState(false);
 
-  const { setRequiresPayment } = useConferenceRegistrationStore();
+  const { setRequiresPayment, setTmlCodeValidationState } =
+    useConferenceRegistrationStore();
   const { defaultBenefits, getBenefitIcon } = useTMLMemberBenefits();
 
   // Watch the maritime league membership value
@@ -57,16 +58,28 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
     benefits,
   } = useRealTimeTMLCodeValidation();
 
-  // Update payment requirement based on membership and code validation
+  // Update payment requirement and validation state based on membership and code validation
   useEffect(() => {
     if (membership === "YES" && isValid) {
       setRequiresPayment(false);
+      setTmlCodeValidationState({ isValid: true, isRequired: true });
+    } else if (membership === "YES" && showCodeInput) {
+      setRequiresPayment(false);
+      setTmlCodeValidationState({ isValid: false, isRequired: true });
     } else if (membership === "NO") {
       setRequiresPayment(true);
+      setTmlCodeValidationState({ isValid: true, isRequired: false });
     } else {
       setRequiresPayment(false);
+      setTmlCodeValidationState({ isValid: true, isRequired: false });
     }
-  }, [membership, isValid, setRequiresPayment]);
+  }, [
+    membership,
+    isValid,
+    showCodeInput,
+    setRequiresPayment,
+    setTmlCodeValidationState,
+  ]);
 
   // Handle membership selection
   const handleMembershipChange = (value: string) => {

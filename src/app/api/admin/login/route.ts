@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { createSession } from '@/lib/adminSessions';
 
 const prisma = new PrismaClient();
 
@@ -24,7 +25,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('Login attempt:', { username, foundAdmin: !!admin });
+
     if (!admin) {
+      console.log('Admin not found for username:', username);
       return NextResponse.json({
         success: false,
         message: 'Invalid credentials',
@@ -32,24 +36,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
+    console.log('Comparing password for user:', username);
     const isValidPassword = await bcrypt.compare(password, admin.password);
+    console.log('Password valid:', isValidPassword);
+
     if (!isValidPassword) {
+      console.log('Password mismatch for user:', username);
       return NextResponse.json({
         success: false,
         message: 'Invalid credentials',
       }, { status: 401 });
     }
+    // Generate simple session token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8 hours
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        adminId: admin.id,
-        username: admin.username,
-        status: admin.status,
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '8h' }
-    );
+    // Store session
+    createSession(token, {
+      adminId: admin.id,
+      username: admin.username,
+      status: admin.status,
+      expiresAt,
+    });
 
     return NextResponse.json({
       success: true,
@@ -62,7 +70,7 @@ export async function POST(request: NextRequest) {
           isActive: admin.isActive,
         },
         token,
-        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
+        expiresAt
       },
     });
 

@@ -18,7 +18,8 @@ interface UserAccountsProps {
 
 export function UserAccounts({ form }: UserAccountsProps) {
   const email = form.watch("email");
-  const { data: emailCheck, isLoading: emailLoading } = useEmailValidation(email);
+  const { data: emailCheck, isLoading: emailLoading } =
+    useEmailValidation(email);
 
   return (
     <div className="space-y-4">
@@ -36,16 +37,19 @@ export function UserAccounts({ form }: UserAccountsProps) {
               <div className="space-y-2">
                 <div className="relative">
                   <FormControl>
-                    <Input 
-                      type="email" 
+                    <Input
+                      type="email"
                       {...field}
                       className={`pr-10 ${
-                        emailCheck?.exists ? 'border-red-500 focus-visible:ring-red-500' : 
-                        email && email.includes('@') && !emailCheck?.exists ? 'border-green-500 focus-visible:ring-green-500' : ''
+                        emailCheck?.exists
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : email && email.includes("@") && !emailCheck?.exists
+                          ? "border-green-500 focus-visible:ring-green-500"
+                          : ""
                       }`}
                     />
                   </FormControl>
-                  {email && email.includes('@') && (
+                  {email && email.includes("@") && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       {emailLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
@@ -57,24 +61,28 @@ export function UserAccounts({ form }: UserAccountsProps) {
                     </div>
                   )}
                 </div>
-                
+
                 {emailCheck?.exists && (
                   <Alert variant="destructive" className="py-2">
                     <XCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
-                      This email is already registered. Please use a different email address.
+                      This email is already registered. Please use a different
+                      email address.
                     </AlertDescription>
                   </Alert>
                 )}
-                
-                {email && email.includes('@') && !emailCheck?.exists && !emailLoading && (
-                  <Alert className="py-2 border-green-200 bg-green-50">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-sm text-green-600">
-                      Email is available!
-                    </AlertDescription>
-                  </Alert>
-                )}
+
+                {email &&
+                  email.includes("@") &&
+                  !emailCheck?.exists &&
+                  !emailLoading && (
+                    <Alert className="py-2 border-green-200 bg-green-50">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-sm text-green-600">
+                        Email is available!
+                      </AlertDescription>
+                    </Alert>
+                  )}
               </div>
             </FormItem>
           )}
@@ -84,13 +92,27 @@ export function UserAccounts({ form }: UserAccountsProps) {
           name="mobileNumber"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Mobile Number *</FormLabel>
-                <FormMessage />
-              </div>
+              <FormLabel className="text-lg">Phone *</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 z-10 bg-background px-1 ">
+                    +63
+                  </div>
+                  <Input
+                    placeholder="Enter your phone number"
+                    {...field}
+                    value={field.value?.replace("+63", "") || ""}
+                    onChange={(e) => {
+                      const numbersOnly = e.target.value.replace(/\D/g, "");
+                      const truncated = numbersOnly.slice(0, 10);
+                      field.onChange(`+63${truncated}`);
+                    }}
+                    className="pl-12 "
+                    maxLength={10}
+                  />
+                </div>
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

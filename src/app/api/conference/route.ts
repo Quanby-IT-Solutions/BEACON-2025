@@ -93,6 +93,47 @@ export async function POST(request: NextRequest) {
       ...conferenceData
     } = validatedData;
 
+    // Validate TML member code if membership is YES
+    if (conferenceData.isMaritimeLeagueMember === 'YES') {
+      if (!conferenceData.tmlMemberCode || conferenceData.tmlMemberCode.trim().length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'TML member code is required when selecting "YES" for Maritime League membership',
+        }, { status: 400 });
+      }
+
+      // Validate the TML code exists and is active
+      const tmlCode = await prisma.codeDistribution.findFirst({
+        where: {
+          code: conferenceData.tmlMemberCode.trim(),
+          isActive: true,
+        },
+        include: {
+          user: {
+            include: {
+              UserAccounts: true,
+              UserDetails: true,
+            },
+          },
+        },
+      });
+
+      if (!tmlCode) {
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid TML member code. Please enter a valid code or change your membership selection.',
+        }, { status: 400 });
+      }
+
+      // Check if code is already used by someone else
+      if (tmlCode.userId && tmlCode.user?.UserAccounts?.[0]?.email !== email) {
+        return NextResponse.json({
+          success: false,
+          error: `This TML member code is already in use by ${tmlCode.user?.UserDetails?.[0]?.firstName} ${tmlCode.user?.UserDetails?.[0]?.lastName} (${tmlCode.user?.UserAccounts?.[0]?.email}). Please use your own TML member code.`,
+        }, { status: 400 });
+      }
+    }
+
     // Check if user already has a registration
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -390,6 +431,18 @@ export async function POST(request: NextRequest) {
               ? 'Online payment - PayMongo checkout session created, awaiting payment confirmation'
               : 'Manual payment processing required',
         }
+      });
+    }
+
+    // Mark TML code as used if it was provided and valid
+    if (conferenceData.isMaritimeLeagueMember === 'YES' && conferenceData.tmlMemberCode) {
+      await prisma.codeDistribution.update({
+        where: {
+          code: conferenceData.tmlMemberCode.trim(),
+        },
+        data: {
+          userId: user.id,
+        },
       });
     }
 

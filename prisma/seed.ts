@@ -7,8 +7,8 @@ async function main() {
     console.log('<1 Starting database seeding...');
 
     // Hash passwords
-    const adminPassword = await bcrypt.hash('beacon-admin-321-**', 10);
-    const superAdminPassword = await bcrypt.hash('beacon-superadmin-321-**', 10);
+    const adminPassword = await bcrypt.hash('password', 10);
+    const superAdminPassword = await bcrypt.hash('password', 10);
 
     console.log('= Creating manager accounts...');
 
@@ -56,9 +56,37 @@ async function main() {
     console.log(`   - TEST ADMIN: ${testAdmin.username} (ID: ${testAdmin.id})`);
 
     console.log('\n= Login credentials:');
-    console.log('   SUPERADMIN - Username: superadmin, Password: superadmin123');
-    console.log('   ADMIN - Username: admin, Password: admin123');
+    console.log('   SUPERADMIN - Username: superadmin, Password: password');
+    console.log('   ADMIN - Username: admin, Password: password');
     console.log('   TEST ADMIN - Username: testadmin, Password: testadmin123');
+
+    console.log('\n🎫 Creating test TML codes...');
+    
+    // Create test TML codes for testing
+    const testCodes = [
+        'TML001',
+        'TML002', 
+        'TML003',
+        'BEACON001',
+        'BEACON002',
+        'TESTCODE1',
+        'TESTCODE2',
+    ];
+
+    for (const code of testCodes) {
+        await prisma.codeDistribution.upsert({
+            where: { code },
+            update: {},
+            create: {
+                code,
+                isActive: true,
+            },
+        });
+    }
+
+    console.log(`   ✅ Created ${testCodes.length} test TML codes: ${testCodes.join(', ')}`);
+    console.log('\n🎫 Test TML Codes for testing:');
+    console.log(`   ${testCodes.join(', ')}`);
 
     console.log('\n<1 Database seeding completed!');
 }

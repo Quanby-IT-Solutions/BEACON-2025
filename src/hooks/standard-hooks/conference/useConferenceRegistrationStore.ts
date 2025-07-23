@@ -36,6 +36,13 @@ interface ConferenceRegistrationStore {
   // Payment state
   requiresPayment: boolean;
   setRequiresPayment: (requires: boolean) => void;
+
+  // TML Code validation state
+  tmlCodeValidationState: {
+    isValid: boolean;
+    isRequired: boolean;
+  };
+  setTmlCodeValidationState: (state: { isValid: boolean; isRequired: boolean }) => void;
 }
 
 export const useConferenceRegistrationStore = create<ConferenceRegistrationStore>()(
@@ -49,6 +56,10 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
       selectedEvents: [],
       totalAmount: 0,
       requiresPayment: false,
+      tmlCodeValidationState: {
+        isValid: true,
+        isRequired: false,
+      },
 
       updateFormData: (data) =>
         set((state) => ({
@@ -79,6 +90,10 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
           selectedEvents: [],
           totalAmount: 0,
           requiresPayment: false,
+          tmlCodeValidationState: {
+            isValid: true,
+            isRequired: false,
+          },
         }),
 
       updateSelectedEvents: (events) => {
@@ -109,6 +124,8 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
       },
 
       setRequiresPayment: (requires) => set({ requiresPayment: requires }),
+
+      setTmlCodeValidationState: (state) => set({ tmlCodeValidationState: state }),
 
       saveDraft: () => {
         const { formData } = get();

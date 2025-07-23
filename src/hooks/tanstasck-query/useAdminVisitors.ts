@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAdminStore } from "@/stores/adminStore";
 
 interface VisitorData {
@@ -85,5 +85,39 @@ export const useAdminVisitors = () => {
     enabled: isAuthenticated && !!sessionToken,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 1,
+  });
+};
+
+const deleteVisitor = async (visitorId: string, token: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`/api/admin/visitors/${visitorId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to delete visitor');
+  }
+
+  return result;
+};
+
+export const useDeleteVisitor = () => {
+  const { sessionToken } = useAdminStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (visitorId: string) => deleteVisitor(visitorId, sessionToken!),
+    onSuccess: () => {
+      // Refetch the visitors list after successful deletion
+      queryClient.invalidateQueries({ queryKey: ['admin-visitors'] });
+    },
+    onError: (error) => {
+      console.error('Delete visitor error:', error);
+    },
   });
 };

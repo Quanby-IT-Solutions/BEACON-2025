@@ -73,6 +73,8 @@ export const useAdminStore = create<AdminStore>()(
       partialize: (state) => ({
         currentAdmin: state.currentAdmin,
         isAuthenticated: state.isAuthenticated,
+        sessionToken: state.sessionToken,
+        tokenExpiry: state.tokenExpiry,
       }),
     }
   )

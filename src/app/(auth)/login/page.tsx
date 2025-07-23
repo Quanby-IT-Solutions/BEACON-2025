@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -25,8 +25,14 @@ export default function AdminLoginPage() {
   const adminLogin = useAdminLogin();
 
   // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/admin");
+    }
+  }, [isAuthenticated, router]);
+
+  // Don't render the form if already authenticated
   if (isAuthenticated) {
-    router.push("/admin");
     return null;
   }
 
