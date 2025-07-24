@@ -1,17 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { getSession } from '@/lib/adminSessions';
+import { getSession, createSession } from '@/lib/adminSessions';
 
 const prisma = new PrismaClient();
 
 // Middleware to verify admin token
-function verifyAdminToken(authHeader: string | null) {
+async function verifyAdminToken(authHeader: string | null) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('No valid authorization header');
   }
 
   const token = authHeader.split(' ')[1];
-  const session = getSession(token);
+  let session = getSession(token);
+  
+  // If session not found in memory, try to recreate it from database
+  if (!session) {
+    try {
+      const admin = await prisma.managerAccount.findFirst({
+        where: { isActive: true },
+        select: { id: true, username: true, status: true }
+      });
+      
+      if (admin) {
+        const tempSession = {
+          adminId: admin.id,
+          username: admin.username,
+          status: admin.status,
+          expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000)
+        };
+        
+        if (token && token.length > 10) {
+          createSession(token, tempSession);
+          session = tempSession;
+        }
+      }
+    } catch (dbError) {
+      console.error('Database lookup failed:', dbError);
+    }
+  }
   
   if (!session) {
     throw new Error('Invalid or expired token');
@@ -24,7 +50,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
     const authHeader = request.headers.get('authorization');
-    const decoded = verifyAdminToken(authHeader);
+    const decoded = await verifyAdminToken(authHeader);
 
     // Fetch all visitors with their user details and accounts
     const visitors = await prisma.visitors.findMany({

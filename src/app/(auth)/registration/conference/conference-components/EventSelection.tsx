@@ -170,40 +170,6 @@ export default function EventSelection({ form }: EventSelectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-blue-600" />
-          Event Selection
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Choose the events you'd like to attend at BEACON 2025. ( has discount
-          if you select all 3 conference events )
-        </p>
-      </div>
-
-      {/* Pricing Notice for Non-TML Members */}
-      {requiresPayment && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <DollarSign className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
-            <strong>Payment Required:</strong> As a non-TML member, you'll need
-            to pay for selected events. TML members enjoy free access to all
-            events.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Free Events Notice for TML Members */}
-      {!requiresPayment && (
-        <Alert className="border-green-200 bg-green-50">
-          <Users className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            <strong>TML Member Benefit:</strong> All events are free for
-            verified TML members!
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Event Selection */}
       <FormField
         control={form.control}
@@ -212,13 +178,13 @@ export default function EventSelection({ form }: EventSelectionProps) {
           <FormItem>
             <div className="flex items-center justify-between">
               <FormLabel className="text-base font-medium">
-                Select Events to Attend *
+                1. Select Events to Attend *
               </FormLabel>
               <FormMessage />
             </div>
-            <FormDescription>
-              Select one or more events you'd like to attend. You can modify
-              your selection later.
+            <FormDescription className="font-normal text-accent-foreground">
+              Select one or more events you'd like to attend. Get a discount of
+              ₱1,500 if you select all 3 conference events.
             </FormDescription>
             <FormControl>
               <div className="grid grid-cols-1 gap-4">
@@ -229,76 +195,61 @@ export default function EventSelection({ form }: EventSelectionProps) {
                       key={event.id}
                       className="relative hover:shadow-md transition-shadow"
                     >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-2">
-                            <FormField
-                              control={form.control}
-                              name="selectedEventIds"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(
-                                          event.id
-                                        )}
-                                        onCheckedChange={(checked) => {
-                                          const currentValues =
-                                            field.value || [];
-                                          if (checked) {
-                                            field.onChange([
-                                              ...currentValues,
-                                              event.id,
-                                            ]);
-                                          } else {
-                                            field.onChange(
-                                              currentValues.filter(
-                                                (value) => value !== event.id
-                                              )
-                                            );
-                                          }
-                                        }}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                );
-                              }}
-                            />
-                            <div className="flex-1">
-                              <CardTitle className="text-base leading-tight">
-                                {event.eventName}
-                              </CardTitle>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              className={getEventStatusColor(event.eventStatus)}
-                              variant="secondary"
-                            >
-                              {event.eventStatus}
-                            </Badge>
-                            <Badge variant="outline" className="font-semibold">
-                              {formatPrice(Number(event.eventPrice))}
-                            </Badge>
-                          </div>
-                        </div>
+                      <CardHeader className="px-4">
+                        <FormField
+                          control={form.control}
+                          name="selectedEventIds"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(event.id)}
+                                    onCheckedChange={(checked) => {
+                                      const currentValues = field.value || [];
+                                      if (checked) {
+                                        field.onChange([
+                                          ...currentValues,
+                                          event.id,
+                                        ]);
+                                      } else {
+                                        field.onChange(
+                                          currentValues.filter(
+                                            (value) => value !== event.id
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-accent-foreground items-center">
+                                  {event.eventName}
+                                  <div className="flex items-center gap-2">
+                                    <Badge
+                                      className={getEventStatusColor(
+                                        event.eventStatus
+                                      )}
+                                      variant="secondary"
+                                    >
+                                      {event.eventStatus}
+                                    </Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="font-semibold"
+                                    >
+                                      {formatPrice(Number(event.eventPrice))}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    {formatDate(new Date(event.eventDate))}
+                                  </div>
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
                       </CardHeader>
-
-                      <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {formatDate(new Date(event.eventDate))}
-                          </div>
-
-                          {event.description && (
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              {event.description}
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
                     </Card>
                   ))}
               </div>
@@ -306,113 +257,6 @@ export default function EventSelection({ form }: EventSelectionProps) {
           </FormItem>
         )}
       />
-
-      {/* Selection Summary */}
-      {selectedEventIds.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <h4 className="font-semibold text-blue-900 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Selected Events ({selectedEventIds.length})
-              </h4>
-
-              <div className="space-y-2">
-                {selectedEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-blue-800">{event.name}</span>
-                    <span className="font-medium text-blue-900">
-                      {formatPrice(event.price)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-blue-200 pt-3">
-                {/* Show discount breakdown if applicable */}
-                {(() => {
-                  const conferenceEvents = events.filter(
-                    (event) => event.eventStatus === "CONFERENCE"
-                  );
-                  const selectedConferenceEvents = selectedEvents.filter(
-                    (event) => {
-                      const eventData = events.find((e) => e.id === event.id);
-                      return eventData?.eventStatus === "CONFERENCE";
-                    }
-                  );
-                  const hasConferenceDiscount =
-                    conferenceEvents.length === 3 &&
-                    selectedConferenceEvents.length === 3;
-                  const subtotal = selectedEvents.reduce(
-                    (sum, event) => sum + event.price,
-                    0
-                  );
-
-                  if (hasConferenceDiscount && requiresPayment) {
-                    return (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-blue-800">Subtotal:</span>
-                          <span className="text-blue-800">
-                            {formatPrice(subtotal)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-green-800">
-                            All Conference Events Discount:
-                          </span>
-                          <span className="text-green-800">-₱1,500</span>
-                        </div>
-                        <div className="border-t border-blue-200 pt-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-blue-900">
-                              Total Amount:
-                            </span>
-                            <span className="text-lg font-bold text-blue-900">
-                              {formatPrice(totalAmount)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-blue-900">
-                          Total Amount:
-                        </span>
-                        <span className="text-lg font-bold text-blue-900">
-                          {requiresPayment
-                            ? formatPrice(totalAmount)
-                            : "FREE (TML Member)"}
-                        </span>
-                      </div>
-                    );
-                  }
-                })()}
-                {!requiresPayment && totalAmount > 0 && (
-                  <p className="text-xs text-blue-700 mt-1">
-                    Savings: {formatPrice(totalAmount)} (TML Member Benefit)
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* No Selection Warning */}
-      {selectedEventIds.length === 0 && (
-        <Alert className="border-amber-200 bg-amber-50">
-          <Clock className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            Please select at least one event to proceed with your registration.
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }

@@ -41,8 +41,8 @@ async function uploadImageToSupabase(base64Image: string, userId: string): Promi
     // Convert base64 to buffer
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // Generate file name with user ID
-    const fileName = `${userId}.jpg`;
+    // Generate file name with user ID directory structure
+    const fileName = `${userId}/face-scan.jpg`;
     const filePath = `user-profile/${fileName}`;
 
     // Upload to Supabase Storage

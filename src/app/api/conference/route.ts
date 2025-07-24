@@ -2,8 +2,54 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { createCheckoutSession, phpToCentavos } from '@/lib/paymongo';
+import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Helper function to upload base64 image to Supabase Storage
+async function uploadImageToSupabase(base64Image: string, userId: string): Promise<string> {
+  try {
+    // Remove data:image/jpeg;base64, prefix if present
+    const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+
+    // Convert base64 to buffer
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+
+    // Generate file name with user ID
+    const fileName = `${userId}/face-scan.jpg`;
+    const filePath = `user-profile/${fileName}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('user-profile')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: true // This will replace if file already exists
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error);
+      throw new Error(`Failed to upload image: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: publicData } = supabase.storage
+      .from('user-profile')
+      .getPublicUrl(filePath);
+
+    return publicData.publicUrl;
+
+  } catch (error) {
+    console.error('Image upload error:', error);
+    throw error;
+  }
+}
 
 // Validation schema for conference registration API (aligned with actual Prisma schema)
 const conferenceRegistrationSchema = z.object({
@@ -192,7 +238,7 @@ export async function POST(request: NextRequest) {
             genderOthers,
             ageBracket,
             nationality,
-            faceScannedUrl: faceScannedUrl || undefined
+            faceScannedUrl: null // Will be updated after image upload
           }
         });
       }
@@ -219,7 +265,7 @@ export async function POST(request: NextRequest) {
               genderOthers,
               ageBracket,
               nationality,
-              faceScannedUrl: faceScannedUrl || undefined
+              faceScannedUrl: null // Will be updated after image upload
             }
           }
         },
@@ -446,6 +492,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Handle face image upload if provided
+    let faceImageUrl: string | null = null;
+    if (faceScannedUrl) {
+      console.log("Conference API: Uploading face image to Supabase");
+      try {
+        faceImageUrl = await uploadImageToSupabase(faceScannedUrl, user.id);
+
+        // Update UserDetails with the face image URL
+        // Use the userDetails variable we already have from user creation/retrieval
+        const userDetailsId = userDetails?.id;
+        
+        if (userDetailsId) {
+          await prisma.userDetails.update({
+            where: { id: userDetailsId },
+            data: {
+              faceScannedUrl: faceImageUrl,
+            },
+          });
+        } else {
+          console.error("Conference API: UserDetails ID not found for user:", user.id);
+        }
+
+        console.log("Conference API: Face image uploaded and URL updated successfully");
+      } catch (imageError) {
+        console.error("Conference API: Face image upload failed:", imageError);
+        // Log the error but don't fail the registration
+        // The user registration is already completed
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -455,6 +531,7 @@ export async function POST(request: NextRequest) {
         totalAmount: calculatedAmount,
         paymentToken,
         paymentTokenExpiry,
+        faceImageUrl: faceImageUrl,
         // PayMongo integration data
         paymongoCheckoutId: paymongoCheckoutSession?.id || null,
         paymongoCheckoutUrl: paymongoCheckoutSession?.attributes?.checkout_url || null,

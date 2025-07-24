@@ -42,18 +42,45 @@ function PaymentSuccessContent() {
       return;
     }
 
-    // Verify payment status with backend (NEW: Payment-first approach)
+    // Verify and confirm payment for test mode
     const verifyPayment = async () => {
       try {
-        const response = await fetch(
-          `/api/conference/payment/success-verify?checkout_session_id=${checkoutSessionId}`
+        // First, check if payment record exists and get current status
+        const statusResponse = await fetch(
+          `/api/conference/payment/confirm-test?checkout_session_id=${checkoutSessionId}`
         );
-        const data = await response.json();
+        const statusData = await statusResponse.json();
 
-        if (data.success) {
-          setPaymentData(data.data);
+        if (statusData.success) {
+          // If payment is not yet confirmed, confirm it now (for test mode)
+          if (!statusData.data.isPaid || statusData.data.paymentStatus !== 'CONFIRMED') {
+            console.log("Test Mode: Confirming payment...");
+            
+            const confirmResponse = await fetch('/api/conference/payment/confirm-test', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                checkoutSessionId: checkoutSessionId
+              })
+            });
+            
+            const confirmData = await confirmResponse.json();
+            
+            if (confirmData.success) {
+              setPaymentData(confirmData.data);
+              console.log("Test Mode: Payment confirmed successfully");
+            } else {
+              setError(confirmData.error || "Payment confirmation failed");
+            }
+          } else {
+            // Payment already confirmed
+            setPaymentData(statusData.data);
+            console.log("Test Mode: Payment already confirmed");
+          }
         } else {
-          setError(data.error || "Payment verification failed");
+          setError(statusData.error || "Payment record not found");
         }
       } catch (error) {
         console.error("Payment verification error:", error);
@@ -198,11 +225,14 @@ function PaymentSuccessContent() {
               Payment Successful!
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-center">
+          <CardContent className="text-center space-y-2">
             <p className="text-green-700">
               Thank you for your payment. Your BEACON 2025 Conference
               registration is now complete.
             </p>
+            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+              Test Mode: Payment automatically confirmed
+            </div>
           </CardContent>
         </Card>
 

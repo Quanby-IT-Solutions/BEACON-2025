@@ -59,58 +59,68 @@ export async function DELETE(
     if (session.status !== 'SUPERADMIN') {
       return NextResponse.json({
         success: false,
-        message: 'Access denied. Only SUPERADMIN can delete visitors.',
+        message: 'Access denied. Only SUPERADMIN can delete conference registrations.',
       }, { status: 403 });
     }
 
-    const visitorId = params.id;
+    const conferenceId = params.id;
 
-    // Find the visitor first to get the user ID
-    const visitor = await prisma.visitors.findUnique({
-      where: { id: visitorId },
+    // Find the conference registration first to get the user ID
+    const conference = await prisma.conference.findUnique({
+      where: { id: conferenceId },
       select: { userId: true },
     });
 
-    if (!visitor) {
+    if (!conference) {
       return NextResponse.json({
         success: false,
-        message: 'Visitor not found',
+        message: 'Conference registration not found',
       }, { status: 404 });
     }
 
-    // Delete the visitor and related user data in a transaction
+    // Delete the conference registration and related data in a transaction
     await prisma.$transaction(async (tx) => {
-      // Delete visitor record
-      await tx.visitors.delete({
-        where: { id: visitorId },
+      // Delete summary of payments
+      await tx.summaryOfPayments.deleteMany({
+        where: { conferenceId: conferenceId },
+      });
+
+      // Delete conference payment
+      await tx.conferencePayment.deleteMany({
+        where: { conferenceId: conferenceId },
+      });
+
+      // Delete conference registration
+      await tx.conference.delete({
+        where: { id: conferenceId },
       });
 
       // If there's a user ID, delete related user data
-      if (visitor.userId) {
+      if (conference.userId) {
         // Delete user details
         await tx.userDetails.deleteMany({
-          where: { userId: visitor.userId },
+          where: { userId: conference.userId },
         });
 
         // Delete user accounts
         await tx.userAccounts.deleteMany({
-          where: { userId: visitor.userId },
+          where: { userId: conference.userId },
         });
 
         // Delete the user
         await tx.user.delete({
-          where: { id: visitor.userId },
+          where: { id: conference.userId },
         });
       }
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Visitor deleted successfully',
+      message: 'Conference registration deleted successfully',
     });
 
   } catch (error) {
-    console.error('Admin visitor delete error:', error);
+    console.error('Admin conference delete error:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('token') || error.message.includes('authorization')) {
