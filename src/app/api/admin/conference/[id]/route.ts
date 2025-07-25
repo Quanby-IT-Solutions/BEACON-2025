@@ -48,7 +48,7 @@ async function verifyAdminToken(authHeader: string | null) {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify admin authentication
@@ -63,7 +63,8 @@ export async function DELETE(
       }, { status: 403 });
     }
 
-    const conferenceId = params.id;
+    const resolvedParams = await params;
+    const conferenceId = resolvedParams.id;
 
     // Find the conference registration first to get the user ID
     const conference = await prisma.conference.findUnique({

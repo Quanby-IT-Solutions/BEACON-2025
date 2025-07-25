@@ -32,7 +32,7 @@ export async function GET(
                 id: true,
 
                 isMaritimeLeagueMember: true,
-                totalPaymentAmount: true,
+
               }
             }
           }
@@ -97,7 +97,7 @@ export async function PUT(
                 id: true,
 
                 isMaritimeLeagueMember: true,
-                totalPaymentAmount: true,
+
               }
             }
           }
@@ -131,7 +131,6 @@ export async function PUT(
 
 // DELETE - Delete single event by ID
 export async function DELETE(
-  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

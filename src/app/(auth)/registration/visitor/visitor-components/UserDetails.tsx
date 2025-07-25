@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { RegistrationFormData } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
-import { FaceCapture } from "../components/FaceCapture";
+import { FaceCapture } from "../components/FaceCaptureSimple";
 
 const genderOptions = [
   { value: "MALE", label: "Male" },
@@ -253,7 +253,7 @@ export function UserDetails({ form }: UserDetailsProps) {
         )}
 
         {/* Face Capture Section */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 bg-blue-50" data-field="faceScannedUrl">
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -265,10 +265,12 @@ export function UserDetails({ form }: UserDetailsProps) {
               </p>
 
               {/* Use the advanced FaceCapture component */}
-              <FaceCapture
-                onCapture={handleFaceCapture}
-                capturedImage={form.watch("faceScannedUrl")}
-              />
+              <div className="face-capture-component" data-field="faceScannedUrl">
+                <FaceCapture
+                  onCapture={handleFaceCapture}
+                  capturedImage={form.watch("faceScannedUrl")}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -294,53 +294,90 @@ export default function VisitorRegistrationPage() {
 
   // Function to scroll to first error field
   const scrollToFirstError = useCallback(() => {
-    // Get form errors
     const errors = form.formState.errors;
     const errorFields = Object.keys(errors);
 
     if (errorFields.length > 0) {
       const firstErrorField = errorFields[0];
+      let targetElement: Element | null = null;
 
-      // Find the input element by name attribute
-      const inputElement = document.querySelector(
-        `[name="${firstErrorField}"]`
-      );
+      // Special handling for specific field types
+      if (firstErrorField === "faceScannedUrl") {
+        // For face capture, look for the face capture component or card
+        targetElement =
+          document.querySelector("[data-field='faceScannedUrl']") ||
+          document.querySelector(".face-capture-component") ||
+          document.querySelector("canvas") ||
+          document.querySelector("video");
+      } else {
+        // Find the input element by name attribute
+        targetElement = document.querySelector(`[name="${firstErrorField}"]`);
+      }
 
-      if (inputElement) {
+      // If still not found, try to find by label text or data attributes
+      if (!targetElement) {
+        const fieldLabels = document.querySelectorAll("label");
+        for (const label of fieldLabels) {
+          if (
+            label.textContent
+              ?.toLowerCase()
+              .includes(firstErrorField.toLowerCase()) ||
+            label.getAttribute("for") === firstErrorField
+          ) {
+            targetElement = label;
+            break;
+          }
+        }
+      }
+
+      // If still not found, look for FormMessage with error
+      if (!targetElement) {
+        const errorMessages = document.querySelectorAll(".text-destructive");
+        if (errorMessages.length > 0) {
+          targetElement = errorMessages[0];
+        }
+      }
+
+      if (targetElement) {
         // Scroll to the element
-        inputElement.scrollIntoView({
+        targetElement.scrollIntoView({
           behavior: "smooth",
           block: "center",
           inline: "nearest",
         });
 
-        // Focus the input if it's focusable
-        if (typeof (inputElement as HTMLElement).focus === "function") {
-          setTimeout(() => (inputElement as HTMLElement).focus(), 300);
+        // Focus the input if it's focusable and not a special component
+        if (
+          firstErrorField !== "faceScannedUrl" &&
+          typeof (targetElement as HTMLElement).focus === "function"
+        ) {
+          setTimeout(() => (targetElement as HTMLElement).focus(), 300);
         }
 
         // Show toast with error message
         const errorMessage =
           errors[firstErrorField as keyof typeof errors]?.message;
+        const friendlyFieldName =
+          firstErrorField === "faceScannedUrl"
+            ? "Face Capture"
+            : firstErrorField
+                .replace(/([A-Z])/g, " $1")
+                .replace(/^./, (str) => str.toUpperCase());
+
         toast.error("Please check required fields", {
-          description: `${errorMessage || `${firstErrorField} is required`}`,
+          description: `${friendlyFieldName}: ${
+            errorMessage || "This field is required"
+          }`,
           duration: 4000,
         });
       } else {
-        // Fallback: look for error message elements
-        const errorMessage = document.querySelector(".text-destructive");
-        if (errorMessage) {
-          errorMessage.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
-          });
-
-          toast.error("Please check required fields", {
-            description: "Some fields need your attention.",
-            duration: 4000,
-          });
-        }
+        // Ultimate fallback
+        console.warn(`Could not find element for field: ${firstErrorField}`);
+        toast.error("Please check required fields", {
+          description:
+            "Some fields need your attention. Please review the form.",
+          duration: 4000,
+        });
       }
     }
   }, [form.formState.errors]);

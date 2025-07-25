@@ -48,7 +48,7 @@ async function verifyAdminToken(authHeader: string | null) {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify admin authentication
@@ -63,7 +63,8 @@ export async function DELETE(
       }, { status: 403 });
     }
 
-    const visitorId = params.id;
+    const resolvedParams = await params;
+    const visitorId = resolvedParams.id;
 
     // Find the visitor first to get the user ID
     const visitor = await prisma.visitors.findUnique({

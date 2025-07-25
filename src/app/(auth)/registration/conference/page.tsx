@@ -820,7 +820,10 @@ export default function ConferenceRegistrationSinglePage() {
               Registration Successful!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              🎉 Welcome to BEACON 2025 Conference! Your registration has been {requiresPayment ? "submitted successfully." : "completed successfully."}
+              🎉 Welcome to BEACON 2025 Conference! Your registration has been{" "}
+              {requiresPayment
+                ? "submitted successfully."
+                : "completed successfully."}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -856,7 +859,7 @@ export default function ConferenceRegistrationSinglePage() {
                   registrationData: null,
                 });
                 // Optionally redirect to a thank you page or home
-                window.location.href = "/";
+                window.location.href = "/https://www.thebeaconexpo.com/";
               }}
               className="w-full bg-green-600 hover:bg-green-700"
             >
@@ -865,7 +868,6 @@ export default function ConferenceRegistrationSinglePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }
