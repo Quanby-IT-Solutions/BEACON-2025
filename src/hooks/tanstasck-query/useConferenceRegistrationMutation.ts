@@ -33,28 +33,35 @@ const registerForConference = async (data: ConferenceRegistrationFormData): Prom
 
   // Determine payment requirements
   const requiresPayment = data.isMaritimeLeagueMember === 'NO' && data.totalPaymentAmount && data.totalPaymentAmount > 0;
-  const isOnlinePayment = data.paymentMode && data.paymentMode !== 'WALK_IN_ON_SITE';
 
   console.log("Payment decision logic:", {
     requiresPayment,
-    isOnlinePayment,
     paymentMode: data.paymentMode,
     totalAmount: data.totalPaymentAmount
   });
 
-  // Use payment-first route for online payments, immediate route for TML members and walk-in payments
-  const endpoint = (requiresPayment && isOnlinePayment) 
-    ? "/api/conference/payment/initiate" 
-    : "/api/conference";
+  // Create FormData to handle file upload
+  const formData = new FormData();
+  
+  // Add all form fields to FormData
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'receiptImageUrl' && value instanceof File) {
+      // Handle file upload
+      formData.append('receiptFile', value);
+    } else if (Array.isArray(value)) {
+      // Handle arrays (selectedEventIds, interestAreas)
+      formData.append(key, JSON.stringify(value));
+    } else if (value !== null && value !== undefined) {
+      // Handle other values
+      formData.append(key, String(value));
+    }
+  });
 
-  console.log("Using endpoint:", endpoint);
+  console.log("Using endpoint: /api/conference");
 
-  const response = await fetch(endpoint, {
+  const response = await fetch("/api/conference", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    body: formData, // No Content-Type header for FormData
   });
 
   console.log("Response status:", response.status);
@@ -74,8 +81,18 @@ const registerForConference = async (data: ConferenceRegistrationFormData): Prom
   }
 
   if (!response.ok) {
-    const errorResponse = responseData as ConferenceAPIError;
-    throw new Error(`HTTP ${response.status}: ${errorResponse.error || "Conference registration failed"}`);
+    const errorResponse = responseData as ConferenceAPIError & { message?: string; details?: any[] };
+    console.error('API Error Response:', errorResponse);
+    
+    let errorMessage = errorResponse.error || "Conference registration failed";
+    if (errorResponse.message) {
+      errorMessage += `: ${errorResponse.message}`;
+    }
+    if (errorResponse.details) {
+      console.error('Validation details:', errorResponse.details);
+    }
+    
+    throw new Error(errorMessage);
   }
 
   return responseData;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -34,14 +34,17 @@ import { useVisitorRegistrationStore } from "@/stores/visitorRegistrationStore";
 import { useEmailValidation } from "@/hooks/tanstasck-query/useEmailValidation";
 
 // Import all components
-import { UserDetails } from "./visitor-components/UserDetails";
-import { UserAccounts } from "./visitor-components/UserAccounts";
+
 import { ProfessionalInfo } from "./visitor-components/ProfessionalInfo";
 import { EventPreferences } from "./visitor-components/EventPreferences";
 import { EmergencySafety } from "./visitor-components/EmergencySafety";
 import { AdditionalInfo } from "./visitor-components/AdditionalInfo";
 import { RegistrationProgress } from "./components/RegistrationProgress";
 import { DraftManager } from "./components/DraftManager";
+import { UserDetails } from "./visitor-components/UserDetails";
+import { UserAccounts } from "./visitor-components/UserAccounts";
+import { Separator } from "@/components/ui/separator";
+import { Icon } from "@iconify/react";
 
 export default function VisitorRegistrationPage() {
   const {
@@ -53,6 +56,37 @@ export default function VisitorRegistrationPage() {
     setRegistrationData,
     reset: resetVisitorStore,
   } = useVisitorRegistrationStore();
+
+  // Refs for measuring container heights
+  const personalContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const contactContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const eventContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const professionalContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const emergencyContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const additionalContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+  const submitContainerRef = useRef<HTMLDivElement>(
+    null
+  ) as React.RefObject<HTMLDivElement>;
+
+  // State for dynamic vertical line counts
+  const [personalLineCount, setPersonalLineCount] = useState(6);
+  const [contactLineCount, setContactLineCount] = useState(6);
+  const [eventLineCount, setEventLineCount] = useState(6);
+  const [professionalLineCount, setProfessionalLineCount] = useState(6);
+  const [emergencyLineCount, setEmergencyLineCount] = useState(6);
+  const [additionalLineCount, setAdditionalLineCount] = useState(6);
 
   const registrationMutation = useRegistrationMutation();
   const { clearFormData } = useRegistrationStore();
@@ -66,6 +100,190 @@ export default function VisitorRegistrationPage() {
   const email = form.watch("email");
   const attendeeType = form.watch("attendeeType");
   const { data: emailCheck } = useEmailValidation(email);
+
+  // Watch additional form fields that can cause dynamic height changes
+  const gender = form.watch("gender");
+  const interestAreas = form.watch("interestAreas");
+  const attendingDays = form.watch("attendingDays");
+
+  // Function to calculate number of vertical lines based on content container height
+  const calculateLineCount = useCallback(
+    (containerRef: React.RefObject<HTMLDivElement>) => {
+      if (!containerRef.current) {
+        console.log("calculateLineCount: No container ref");
+        return 6; // Default fallback
+      }
+
+      // Find the specific content container with the h-fit classes
+      const contentContainer = containerRef.current.querySelector(
+        ".h-fit"
+      ) as HTMLElement;
+      if (!contentContainer) {
+        console.log("calculateLineCount: No content container found");
+        return 6;
+      }
+
+      const contentHeight = contentContainer.offsetHeight;
+      const titleHeight = 32; // h1 title height approximately
+      const titleGap = 16; // gap-4 = 16px
+      const iconHeight = 48; // lg:h-12 lg:w-12 = 48px on large screens
+      const iconSpacing = 4; // space-y-1 = 4px
+
+      // Calculate total height (content + title + gaps)
+      const totalContentHeight = contentHeight + titleHeight + titleGap;
+
+      // Calculate available height for lines (subtract icon height and spacing)
+      const availableHeight = totalContentHeight - iconHeight - iconSpacing;
+
+      // Each line is h-2 (8px) + space-y-1 (4px) = 12px total
+      const lineHeight = 8; // h-2 = 8px
+      const lineSpacing = 4; // space-y-1 = 4px between elements
+      const totalLineHeight = lineHeight + lineSpacing;
+
+      // Calculate how many lines can fit
+      const lineCount = Math.max(
+        1,
+        Math.floor(availableHeight / totalLineHeight)
+      );
+
+      console.log(
+        `calculateLineCount: contentHeight=${contentHeight}, totalHeight=${totalContentHeight}, available=${availableHeight}, lines=${lineCount}`
+      );
+      return lineCount;
+    },
+    []
+  );
+
+  // Debounced update function to prevent excessive updates
+  const debouncedUpdateRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedUpdateLineCounts = useCallback(() => {
+    console.log("debouncedUpdateLineCounts: Starting update");
+    if (debouncedUpdateRef.current) {
+      clearTimeout(debouncedUpdateRef.current);
+    }
+
+    debouncedUpdateRef.current = setTimeout(() => {
+      console.log("debouncedUpdateLineCounts: Executing delayed update");
+
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        const personalCount = calculateLineCount(personalContainerRef);
+        const contactCount = calculateLineCount(contactContainerRef);
+        const eventCount = calculateLineCount(eventContainerRef);
+        const professionalCount = calculateLineCount(professionalContainerRef);
+        const emergencyCount = calculateLineCount(emergencyContainerRef);
+        const additionalCount = calculateLineCount(additionalContainerRef);
+
+        setPersonalLineCount(personalCount);
+        setContactLineCount(contactCount);
+        setEventLineCount(eventCount);
+        setProfessionalLineCount(professionalCount);
+        setEmergencyLineCount(emergencyCount);
+        setAdditionalLineCount(additionalCount);
+
+        console.log("debouncedUpdateLineCounts: Line counts updated", {
+          personal: personalCount,
+          contact: contactCount,
+          event: eventCount,
+        });
+      });
+    }, 150);
+  }, [calculateLineCount]);
+
+  // Update line counts when containers resize
+  useEffect(() => {
+    const updateLineCounts = () => {
+      setPersonalLineCount(calculateLineCount(personalContainerRef));
+      setContactLineCount(calculateLineCount(contactContainerRef));
+      setEventLineCount(calculateLineCount(eventContainerRef));
+      setProfessionalLineCount(calculateLineCount(professionalContainerRef));
+      setEmergencyLineCount(calculateLineCount(emergencyContainerRef));
+      setAdditionalLineCount(calculateLineCount(additionalContainerRef));
+    };
+
+    // Initial calculation
+    updateLineCounts();
+
+    // Set up ResizeObserver for dynamic updates
+    const resizeObserver = new ResizeObserver((entries) => {
+      console.log("ResizeObserver: Detected resize", entries.length, "entries");
+      debouncedUpdateLineCounts();
+    });
+
+    // Set up MutationObserver to catch DOM content changes
+    const mutationObserver = new MutationObserver((mutations) => {
+      console.log(
+        "MutationObserver: Detected DOM changes",
+        mutations.length,
+        "mutations"
+      );
+      debouncedUpdateLineCounts();
+    });
+
+    const refs = [
+      personalContainerRef,
+      contactContainerRef,
+      eventContainerRef,
+      professionalContainerRef,
+      emergencyContainerRef,
+      additionalContainerRef,
+    ];
+
+    refs.forEach((ref) => {
+      if (ref.current) {
+        resizeObserver.observe(ref.current);
+        // Observe child changes as well
+        mutationObserver.observe(ref.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["class", "style"],
+        });
+      }
+    });
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [calculateLineCount, debouncedUpdateLineCounts]);
+
+  // Update line counts when form content changes (with more comprehensive watching)
+  useEffect(() => {
+    console.log("Form change detected:", {
+      attendeeType,
+      gender,
+      interestAreas,
+      attendingDays,
+    });
+
+    // Immediate update
+    debouncedUpdateLineCounts();
+
+    // Additional delayed update to catch any async DOM changes
+    const timeoutId = setTimeout(() => {
+      console.log("Form change: Delayed update triggered");
+      debouncedUpdateLineCounts();
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    attendeeType,
+    gender,
+    interestAreas,
+    attendingDays,
+    debouncedUpdateLineCounts,
+  ]);
+
+  // Cleanup debounced timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedUpdateRef.current) {
+        clearTimeout(debouncedUpdateRef.current);
+      }
+    };
+  }, []);
 
   // Trigger validation when attendee type changes to clear/show professional field errors
   useEffect(() => {
@@ -196,23 +414,32 @@ export default function VisitorRegistrationPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto py-4 px-4 max-w-4xl flex-1 flex flex-col">
-        <Card className="relative flex-1 flex flex-col h-full">
-          <CardHeader className="shrink-0">
-            <CardTitle className="text-2xl text-center">
+      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col">
+        <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2">
+          <CardHeader className="shrink-0 p-0">
+            <CardTitle className="text-2xl uppercase">
               BEACON 2025 Visitor Registration
             </CardTitle>
-            <CardDescription className="text-center">
-              Register for the maritime industry event of the year
+            <div className="w-24 max-w-24 border-c1 border-2 rounded-full h-1 bg-c1"></div>
+            <CardDescription className="">
+              <div className="text-accent-foreground dark:text-accent">
+                <p className="font-semibold">
+                  Official Visitor Registration Form
+                </p>
+                <p>
+                  September 29 – October 1, 2025 | SMX Convention Center, MOA
+                  Complex, Pasay City
+                </p>
+              </div>
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden flex flex-col">
+          <CardContent className="flex-1 overflow-hidden flex flex-col p-0">
             <div className="mb-4 shrink-0">
               <DraftManager form={form} />
             </div>
             <div className="flex-1 overflow-y-auto pb-32">
               <Form {...form}>
-                <div className="relative p-2">
+                <div className="relative lg:p-2">
                   {isSubmitting && (
                     <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 flex items-center justify-center">
                       <div className="text-center space-y-2">
@@ -229,30 +456,209 @@ export default function VisitorRegistrationPage() {
                   <form
                     onSubmit={form.handleSubmit(onSubmit, (errors) => {
                       console.log("Form validation errors:", errors);
-                      // Scroll to first error when client-side validation fails
                       setTimeout(scrollToFirstError, 100);
                     })}
-                    className="space-y-8"
                   >
+                    <div className="max-w-sm mx-auto border-c1 border rounded-full mt-6 mb-12 h-1 bg-c1"></div>
+
                     {/* Personal Information */}
-                    <UserDetails form={form} />
+                    <div
+                      ref={personalContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:account"
+                          width="24"
+                          height="24"
+                        />
+                        {Array.from({ length: personalLineCount }).map(
+                          (_, i) => (
+                            <span
+                              key={i}
+                              className="border-l-2 border-c1 h-2"
+                            ></span>
+                          )
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col lg:mt-3">
+                        <h1 className="text-lg font-semibold">
+                          Personal Information
+                        </h1>
+                        <div className="lg:ml-4 py-4 h-fit">
+                          <UserDetails form={form} />
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Contact Information */}
-                    <UserAccounts form={form} />
+                    <div
+                      ref={contactContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:email"
+                          width="24"
+                          height="24"
+                        />
+                        {Array.from({ length: contactLineCount }).map(
+                          (_, i) => (
+                            <span
+                              key={i}
+                              className="border-l-2 border-c1 h-2"
+                            ></span>
+                          )
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col lg:mt-3">
+                        <h1 className="text-lg font-semibold">
+                          Contact Information
+                        </h1>
+                        <div className="lg:ml-4 py-4 h-fit">
+                          <UserAccounts form={form} />
+                        </div>
+                      </div>
+                    </div>
 
-                    {/* Event Preferences (includes attendee type which affects professional info) */}
-                    <EventPreferences form={form} />
+                    {/* Event Preferences */}
+                    <div
+                      ref={eventContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:calendar-multiple"
+                          width="24"
+                          height="24"
+                        />
+                        {Array.from({ length: eventLineCount }).map((_, i) => (
+                          <span
+                            key={i}
+                            className="border-l-2 border-c1 h-2"
+                          ></span>
+                        ))}
+                      </div>
+                      <div className="flex-1 flex flex-col lg:mt-3">
+                        <h1 className="text-lg font-semibold">
+                          Event Preferences
+                        </h1>
+                        <div className="lg:ml-4 py-4 h-fit">
+                          <EventPreferences form={form} />
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Professional Information - Only show for non-students */}
                     {attendeeType && attendeeType !== "STUDENT_ACADEMIC" && (
-                      <ProfessionalInfo form={form} />
+                      <div
+                        ref={professionalContainerRef}
+                        className="min-h-24 flex flex-row lg:gap-4"
+                      >
+                        <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                          <Icon
+                            className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                            icon="mdi:briefcase"
+                            width="24"
+                            height="24"
+                          />
+                          {Array.from({ length: professionalLineCount }).map(
+                            (_, i) => (
+                              <span
+                                key={i}
+                                className="border-l-2 border-c1 h-2"
+                              ></span>
+                            )
+                          )}
+                        </div>
+                        <div className="flex-1 flex flex-col lg:mt-3">
+                          <h1 className="text-lg font-semibold">
+                            Professional Information
+                          </h1>
+                          <div className="lg:ml-4 py-4 h-fit">
+                            <ProfessionalInfo form={form} />
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     {/* Emergency & Safety */}
-                    <EmergencySafety form={form} />
+                    <div
+                      ref={emergencyContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:shield-check"
+                          width="24"
+                          height="24"
+                        />
+                        {Array.from({ length: emergencyLineCount }).map(
+                          (_, i) => (
+                            <span
+                              key={i}
+                              className="border-l-2 border-c1 h-2"
+                            ></span>
+                          )
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col lg:mt-3">
+                        <h1 className="text-lg font-semibold">
+                          Emergency & Safety
+                        </h1>
+                        <div className="lg:ml-4 py-4 h-fit">
+                          <EmergencySafety form={form} />
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Additional Information */}
-                    <AdditionalInfo form={form} />
+                    <div
+                      ref={additionalContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:information"
+                          width="24"
+                          height="24"
+                        />
+                        {Array.from({ length: additionalLineCount }).map(
+                          (_, i) => (
+                            <span
+                              key={i}
+                              className="border-l-2 border-c1 h-2"
+                            ></span>
+                          )
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col lg:mt-3">
+                        <h1 className="text-lg font-semibold">
+                          Additional Information
+                        </h1>
+                        <div className="lg:ml-4 py-4 h-fit">
+                          <AdditionalInfo form={form} />
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      ref={submitContainerRef}
+                      className="min-h-24 flex flex-row lg:gap-4"
+                    >
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="line-md:downloading-loop"
+                          width="24"
+                          height="24"
+                        />
+                      </div>
+                    </div>
 
                     <div className="space-y-4 pb-8">
                       <Button

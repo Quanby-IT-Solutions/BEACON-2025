@@ -242,7 +242,6 @@ export function ConferenceDataTable({
     > = {
       YES: { variant: "default", label: "TML Member" },
       NO: { variant: "outline", label: "Non-Member" },
-      APPLY_FOR_MEMBERSHIP: { variant: "secondary", label: "Applying" },
     };
 
     const config = badgeMap[membership] || {

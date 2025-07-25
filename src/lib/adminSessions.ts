@@ -35,7 +35,9 @@ export function getSession(token: string): AdminSession | null {
           expiresAt: new Date(parsed.expiresAt)
         };
         // Restore to memory
-        sessions.set(token, session);
+        if (session) {
+          sessions.set(token, session);
+        }
       } catch (error) {
         console.error('Failed to parse stored session:', error);
         localStorage.removeItem(`admin-session-${token}`);

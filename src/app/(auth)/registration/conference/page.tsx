@@ -54,7 +54,6 @@ interface ConferenceRegistrationState {
     userId: string;
     requiresPayment: boolean;
     totalAmount: number;
-    paymongoCheckoutUrl?: string;
   } | null;
 }
 
@@ -417,27 +416,6 @@ export default function ConferenceRegistrationSinglePage() {
         onSuccess: (result) => {
           console.log("Conference registration successful!", result);
 
-          // Handle PayMongo payment redirection
-          if (result.data?.paymongoCheckoutUrl && requiresPayment) {
-            // Store data and redirect to PayMongo
-            setState((prev) => ({
-              ...prev,
-              registrationData: result.data,
-              isSubmitting: false,
-            }));
-
-            toast.success("Registration Created!", {
-              description: "Redirecting to payment...",
-              duration: 3000,
-            });
-
-            // Redirect to PayMongo checkout
-            setTimeout(() => {
-              window.location.href = result.data.paymongoCheckoutUrl!;
-            }, 1500);
-            return;
-          }
-
           // Store registration data for success dialog
           setState((prev) => ({
             ...prev,
@@ -449,7 +427,7 @@ export default function ConferenceRegistrationSinglePage() {
           // Show success toast
           toast.success("🎉 Conference Registration Complete!", {
             description: requiresPayment
-              ? "Payment completed successfully!"
+              ? "Your registration and payment receipt have been submitted successfully!"
               : "Your registration has been submitted successfully as a TML member!",
             duration: 5000,
           });
@@ -520,9 +498,7 @@ export default function ConferenceRegistrationSinglePage() {
                       <div className="text-center space-y-2">
                         <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                         <p className="text-sm font-medium">
-                          {state.registrationData?.paymongoCheckoutUrl
-                            ? "Redirecting to Payment..."
-                            : "Submitting Registration..."}
+                          Submitting Registration...
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Please do not close this window
@@ -815,11 +791,7 @@ export default function ConferenceRegistrationSinglePage() {
                           !tmlCodeValidationState.isValid ? (
                           "Enter Valid TML Code to Continue"
                         ) : (
-                          <>
-                            {requiresPayment
-                              ? "Complete Registration & Pay"
-                              : "Complete Registration"}
-                          </>
+                          "Complete Registration"
                         )}
                       </Button>
                     </div>
@@ -832,7 +804,7 @@ export default function ConferenceRegistrationSinglePage() {
       </div>
       <RegistrationProgress form={form} />
 
-      {/* Success Dialog */}
+      {/* Success Dialog - Only for TML members (no payment required) */}
       <AlertDialog
         open={state.showSuccessDialog}
         onOpenChange={(open) =>
@@ -848,15 +820,14 @@ export default function ConferenceRegistrationSinglePage() {
               Registration Successful!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              🎉 Welcome to BEACON 2025 Conference! Your registration has been
-              completed successfully.
+              🎉 Welcome to BEACON 2025 Conference! Your registration has been {requiresPayment ? "submitted successfully." : "completed successfully."}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="text-center space-y-3 px-6 pb-2">
             <div className="text-sm text-muted-foreground">
               {requiresPayment
-                ? "Your payment has been processed and you will receive a confirmation email shortly."
+                ? "Your payment receipt has been uploaded and is under review. You will receive a confirmation email once your payment is verified."
                 : "As a TML member, your registration is complete with no payment required. You will receive a confirmation email shortly."}
             </div>
             {state.registrationData && (
@@ -869,12 +840,6 @@ export default function ConferenceRegistrationSinglePage() {
                   <span className="font-medium">User ID:</span>{" "}
                   {state.registrationData.userId.slice(0, 8)}...
                 </div>
-                {state.registrationData.totalAmount > 0 && (
-                  <div>
-                    <span className="font-medium">Amount:</span> ₱
-                    {state.registrationData.totalAmount.toLocaleString()}
-                  </div>
-                )}
               </div>
             )}
             <div className="text-xs text-muted-foreground">
@@ -900,6 +865,7 @@ export default function ConferenceRegistrationSinglePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }

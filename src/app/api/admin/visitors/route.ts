@@ -12,7 +12,7 @@ async function verifyAdminToken(authHeader: string | null) {
 
   const token = authHeader.split(' ')[1];
   let session = getSession(token);
-  
+
   // If session not found in memory, try to recreate it from database
   if (!session) {
     try {
@@ -20,7 +20,7 @@ async function verifyAdminToken(authHeader: string | null) {
         where: { isActive: true },
         select: { id: true, username: true, status: true }
       });
-      
+
       if (admin) {
         const tempSession = {
           adminId: admin.id,
@@ -28,7 +28,7 @@ async function verifyAdminToken(authHeader: string | null) {
           status: admin.status,
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000)
         };
-        
+
         if (token && token.length > 10) {
           createSession(token, tempSession);
           session = tempSession;
@@ -38,11 +38,11 @@ async function verifyAdminToken(authHeader: string | null) {
       console.error('Database lookup failed:', dbError);
     }
   }
-  
+
   if (!session) {
     throw new Error('Invalid or expired token');
   }
-  
+
   return session;
 }
 
@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           include: {
-            UserDetails: true,
-            UserAccounts: true,
+            user_details: true,
+            user_accounts: true,
           },
         },
       },
@@ -75,25 +75,25 @@ export async function GET(request: NextRequest) {
 
       // Personal Information
       personalInfo: {
-        firstName: visitor.user?.UserDetails?.[0]?.firstName || '',
-        lastName: visitor.user?.UserDetails?.[0]?.lastName || '',
-        middleName: visitor.user?.UserDetails?.[0]?.middleName || '',
-        suffix: visitor.user?.UserDetails?.[0]?.suffix || '',
-        preferredName: visitor.user?.UserDetails?.[0]?.preferredName || '',
-        gender: visitor.user?.UserDetails?.[0]?.gender || '',
-        genderOthers: visitor.user?.UserDetails?.[0]?.genderOthers || '',
-        ageBracket: visitor.user?.UserDetails?.[0]?.ageBracket || '',
-        nationality: visitor.user?.UserDetails?.[0]?.nationality || '',
-        faceScannedUrl: visitor.user?.UserDetails?.[0]?.faceScannedUrl || '',
+        firstName: visitor.user?.user_details?.[0]?.firstName || '',
+        lastName: visitor.user?.user_details?.[0]?.lastName || '',
+        middleName: visitor.user?.user_details?.[0]?.middleName || '',
+        suffix: visitor.user?.user_details?.[0]?.suffix || '',
+        preferredName: visitor.user?.user_details?.[0]?.preferredName || '',
+        gender: visitor.user?.user_details?.[0]?.gender || '',
+        genderOthers: visitor.user?.user_details?.[0]?.genderOthers || '',
+        ageBracket: visitor.user?.user_details?.[0]?.ageBracket || '',
+        nationality: visitor.user?.user_details?.[0]?.nationality || '',
+        faceScannedUrl: visitor.user?.user_details?.[0]?.faceScannedUrl || '',
       },
 
       // Contact Information
       contactInfo: {
-        email: visitor.user?.UserAccounts?.[0]?.email || '',
-        mobileNumber: visitor.user?.UserAccounts?.[0]?.mobileNumber || '',
-        landline: visitor.user?.UserAccounts?.[0]?.landline || '',
-        mailingAddress: visitor.user?.UserAccounts?.[0]?.mailingAddress || '',
-        status: visitor.user?.UserAccounts?.[0]?.status || '',
+        email: visitor.user?.user_accounts?.[0]?.email || '',
+        mobileNumber: visitor.user?.user_accounts?.[0]?.mobileNumber || '',
+        landline: visitor.user?.user_accounts?.[0]?.landline || '',
+        mailingAddress: visitor.user?.user_accounts?.[0]?.mailingAddress || '',
+        status: visitor.user?.user_accounts?.[0]?.status || '',
       },
 
       // Professional Information

@@ -7,7 +7,7 @@ export const baseConferenceSchema = z.object({
   selectedEventIds: z.array(z.string()).default([]),
   faceScannedUrl: z.string().default(""),
 
-  // UserDetails fields
+  // user_details fields
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   middleName: z.string().optional().nullable(),
@@ -18,7 +18,7 @@ export const baseConferenceSchema = z.object({
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
 
-  // UserAccounts fields
+  // user_accounts fields
   email: z.string().email("Invalid email format"),
   mobileNumber: z.string().min(1, "Mobile number is required"),
   mailingAddress: z.string().optional().nullable(),
@@ -44,6 +44,8 @@ export const baseConferenceSchema = z.object({
   customPaymentAmount: z.string().optional().nullable(),
   paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH', 'WALK_IN_ON_SITE']).optional().nullable(),
   hasConferenceDiscount: z.boolean().optional().nullable(),
+  receiptImageUrl: z.any().optional().nullable(), // Will be File object, validated separately
+  referenceNumber: z.string().optional().nullable(),
 
   // Section 7: Consent & Confirmation
   emailCertificate: z.boolean().default(false),
@@ -108,6 +110,19 @@ export const conferenceRegistrationSchema = baseConferenceSchema
   }, {
     message: "Please provide a valid website URL",
     path: ["companyWebsite"],
+  })
+  .refine((data) => {
+    // Receipt file is required for non-TML members when payment is required
+    if (data.isMaritimeLeagueMember === MaritimeLeagueMembership.NO) {
+      // If they have selected events and payment is required, receipt is mandatory
+      if (data.selectedEventIds && data.selectedEventIds.length > 0) {
+        return data.receiptImageUrl instanceof File;
+      }
+    }
+    return true;
+  }, {
+    message: "Receipt image is required for payment verification",
+    path: ["receiptImageUrl"],
   });
 
 export type ConferenceRegistrationFormData = z.infer<typeof conferenceRegistrationSchema>;
@@ -120,7 +135,7 @@ export const defaultConferenceRegistrationValues: ConferenceRegistrationFormData
 
 
 
-  // UserDetails fields
+  // user_details fields
   firstName: "Aj",
   lastName: "Comahes",
   middleName: null,
@@ -131,7 +146,7 @@ export const defaultConferenceRegistrationValues: ConferenceRegistrationFormData
   ageBracket: AgeBracket.AGE_25_34,
   nationality: "Filipino",
 
-  // UserAccounts fields
+  // user_accounts fields
   email: "ajcomahes@gmail.com",
   mobileNumber: "09999999999",
   mailingAddress: '123 Main St, City, Country',
@@ -156,6 +171,8 @@ export const defaultConferenceRegistrationValues: ConferenceRegistrationFormData
   totalPaymentAmount: null,
   customPaymentAmount: null,
   paymentMode: null,
+  receiptImageUrl: null,
+  referenceNumber: null,
 
   // Consent & Confirmation
   emailCertificate: false,
@@ -215,6 +232,14 @@ export const calculateConferencePrice = (duration: 'ONE_DAY' | 'TWO_DAYS' | 'THR
 
 export const BLUE_RUNWAY_PRICE = 2000;
 export const BOAT_SHOW_PRICE = 0; // FREE
+
+// Receipt upload schema (for form validation only, file handled separately)
+export const receiptUploadSchema = z.object({
+  conferenceId: z.string().min(1, "Conference ID is required"),
+  referenceNumber: z.string().optional().nullable(),
+});
+
+export type ReceiptUploadFormData = z.infer<typeof receiptUploadSchema>;
 
 // Form step types for multi-step form
 export type ConferenceFormStep =

@@ -89,10 +89,10 @@ interface CodeDistributionData {
   updatedAt: string;
   user?: {
     id: string;
-    UserAccounts?: Array<{
+    user_accounts?: Array<{
       email: string;
     }>;
-    UserDetails?: Array<{
+    user_details?: Array<{
       firstName: string;
       lastName: string;
     }>;
@@ -238,14 +238,14 @@ export function CodeDistributionDataTable({
           return <span className="text-muted-foreground">Not used</span>;
         }
 
-        const userDetails = code.user.UserDetails?.[0];
-        const userAccount = code.user.UserAccounts?.[0];
+        const user_details = code.user.user_details?.[0];
+        const userAccount = code.user.user_accounts?.[0];
 
-        if (userDetails) {
+        if (user_details) {
           return (
             <div className="text-sm">
               <div className="font-medium">
-                {userDetails.firstName} {userDetails.lastName}
+                {user_details.firstName} {user_details.lastName}
               </div>
               {userAccount && (
                 <div className="text-muted-foreground">{userAccount.email}</div>
@@ -379,14 +379,16 @@ export function CodeDistributionDataTable({
                           <div>
                             <label className="font-medium">Name:</label>
                             <p>
-                              {code.user.UserDetails?.[0]
-                                ? `${code.user.UserDetails[0].firstName} ${code.user.UserDetails[0].lastName}`
+                              {code.user.user_details?.[0]
+                                ? `${code.user.user_details[0].firstName} ${code.user.user_details[0].lastName}`
                                 : "N/A"}
                             </p>
                           </div>
                           <div>
                             <label className="font-medium">Email:</label>
-                            <p>{code.user.UserAccounts?.[0]?.email || "N/A"}</p>
+                            <p>
+                              {code.user.user_accounts?.[0]?.email || "N/A"}
+                            </p>
                           </div>
                         </div>
                       </div>

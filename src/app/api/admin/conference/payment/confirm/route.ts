@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
           include: {
             user: {
               include: {
-                UserAccounts: true,
-                UserDetails: true
+                user_accounts: true,
+                user_details: true
               }
             }
           }
@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
         paymentConfirmedAt: updatedPayment.paymentConfirmedAt,
         transactionId: updatedPayment.transactionId,
         participant: {
-          name: `${payment.conference?.user?.UserDetails?.[0]?.firstName} ${payment.conference?.user?.UserDetails?.[0]?.lastName}`,
-          email: payment.conference?.user?.UserAccounts?.[0]?.email,
+          name: `${payment.conference?.user?.user_details?.[0]?.firstName} ${payment.conference?.user?.user_details?.[0]?.lastName}`,
+          email: payment.conference?.user?.user_accounts?.[0]?.email,
         }
       }
     });
@@ -116,8 +116,8 @@ export async function GET(request: NextRequest) {
           include: {
             user: {
               include: {
-                UserAccounts: true,
-                UserDetails: true
+                user_accounts: true,
+                user_details: true
               }
             },
             summaryOfPayments: {
@@ -145,9 +145,9 @@ export async function GET(request: NextRequest) {
       transactionId: payment.transactionId,
       notes: payment.notes,
       participant: {
-        name: `${payment.conference?.user?.UserDetails?.[0]?.firstName} ${payment.conference?.user?.UserDetails?.[0]?.lastName}`,
-        email: payment.conference?.user?.UserAccounts?.[0]?.email,
-        phone: payment.conference?.user?.UserAccounts?.[0]?.mobileNumber,
+        name: `${payment.conference?.user?.user_details?.[0]?.firstName} ${payment.conference?.user?.user_details?.[0]?.lastName}`,
+        email: payment.conference?.user?.user_accounts?.[0]?.email,
+        phone: payment.conference?.user?.user_accounts?.[0]?.mobileNumber,
       },
       events: payment.conference?.summaryOfPayments?.map(sop => ({
         name: sop.eventName,

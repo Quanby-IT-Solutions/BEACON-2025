@@ -86,23 +86,24 @@ export async function POST(request: NextRequest) {
     // Create user and related records in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create User
-      const user = await tx.user.create({
+      const user = await tx.users.create({
         data: {},
       });
 
-      // Create UserAccounts
-      const userAccount = await tx.userAccounts.create({
+      // Create user_accounts
+      const userAccount = await tx.user_accounts.create({
         data: {
           userId: user.id,
           email: validatedData.email,
           mobileNumber: validatedData.mobileNumber,
           landline: validatedData.landline || null,
           status: 'VISITOR',
+          mailingAddress: validatedData.mailingAddress
         },
       });
 
-      // Create UserDetails (initially without faceScannedUrl)
-      const userDetails = await tx.userDetails.create({
+      // Create user_details (initially without faceScannedUrl)
+      const user_details = await tx.user_details.create({
         data: {
           userId: user.id,
           firstName: validatedData.firstName,
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
       return {
         user,
         userAccount,
-        userDetails,
+        user_details,
         visitor,
       };
     });
@@ -159,9 +160,9 @@ export async function POST(request: NextRequest) {
       try {
         faceImageUrl = await uploadImageToSupabase(validatedData.faceScannedUrl, result.user.id);
 
-        // Update UserDetails with the face image URL
-        await prisma.userDetails.update({
-          where: { id: result.userDetails.id }, // use the id from the create result
+        // Update user_details with the face image URL
+        await prisma.user_details.update({
+          where: { id: result.user_details.id }, // use the id from the create result
           data: {
             faceScannedUrl: faceImageUrl,
           },

@@ -5,7 +5,7 @@ import { z } from "zod";
 
 // Base schema without conditional validation
 export const baseVisitorSchema = z.object({
-  // Personal Information (UserDetails)
+  // Personal Information (user_details)
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   middleName: z.string().optional().nullable(),
@@ -16,8 +16,9 @@ export const baseVisitorSchema = z.object({
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
   faceScannedUrl: z.string().min(1, "Face capture is required"),
+  mailingAddress:z.string().optional(),
 
-  // Account Details (UserAccounts)
+  // Account Details (user_accounts)
   email: z.string().email("Invalid email format"),
   mobileNumber: z.string().min(1, "Mobile number is required"),
   landline: z.string().optional().nullable(),
@@ -97,6 +98,7 @@ export const defaultRegistrationValues: Partial<RegistrationFormData> = {
   preferredName: "Al",
   attendeeType: AttendeeType.STUDENT_ACADEMIC,
   ageBracket: AgeBracket.AGE_18_24,
+  mailingAddress: '',
   // Don't set enum defaults - let user choose
   gender: Gender.MALE,
   genderOthers: "",

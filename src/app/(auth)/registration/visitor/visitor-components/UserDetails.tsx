@@ -14,120 +14,221 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { RegistrationFormData } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
 import { FaceCapture } from "../components/FaceCapture";
+
+const genderOptions = [
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
+  { value: "PREFER_NOT_TO_SAY", label: "Prefer not to say" },
+  { value: "OTHERS", label: "Others" },
+];
+
+const ageBracketOptions = [
+  { value: "UNDER_18", label: "Under 18" },
+  { value: "AGE_18_24", label: "18-24" },
+  { value: "AGE_25_34", label: "25-34" },
+  { value: "AGE_35_44", label: "35-44" },
+  { value: "AGE_45_54", label: "45-54" },
+  { value: "AGE_55_ABOVE", label: "55 and above" },
+];
 
 interface UserDetailsProps {
   form: UseFormReturn<RegistrationFormData>;
 }
 
 export function UserDetails({ form }: UserDetailsProps) {
+  const handleFaceCapture = (imageDataUrl: string) => {
+    form.setValue("faceScannedUrl", imageDataUrl);
+  };
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Personal Information</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>First Name *</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Last Name *</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="middleName"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Middle Name</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} value={field.value || ""} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="suffix"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Suffix</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} value={field.value || ""} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="preferredName"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Preferred Username/Nickname</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} value={field.value || ""} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Gender *</FormLabel>
-                <FormMessage />
-              </div>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        {/* Name Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>1. First Name *</FormLabel>
+                  <FormMessage />
+                </div>
                 <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
+                  <Input
+                    {...field}
+                    placeholder="First name"
+                    className="text-base"
+                  />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
-                  <SelectItem value="PREFER_NOT_TO_SAY">
-                    Prefer not to say
-                  </SelectItem>
-                  <SelectItem value="OTHERS">Others</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>2. Last Name *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Last name"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="middleName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>3. Middle Name</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="Middle name (optional)"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="suffix"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>4. Suffix</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="Jr., Sr., III, etc. (optional)"
+                    className="text-base"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Preferred Name */}
+          <FormField
+            control={form.control}
+            name="preferredName"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>5. Preferred Name</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="How would you like to be called?"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {/* Nationality */}
+          <FormField
+            control={form.control}
+            name="nationality"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>6. Nationality *</FormLabel>
+                  <FormMessage />
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., Filipino, American, etc."
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          {/* Gender */}
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>7. Gender *</FormLabel>
+                  <FormMessage />
+                </div>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {genderOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          {/* Age Bracket */}
+          <FormField
+            control={form.control}
+            name="ageBracket"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>8. Age Bracket *</FormLabel>
+                  <FormMessage />
+                </div>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select age bracket" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {ageBracketOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Gender Others field - conditionally shown */}
         {form.watch("gender") === "OTHERS" && (
           <FormField
             control={form.control}
@@ -135,79 +236,49 @@ export function UserDetails({ form }: UserDetailsProps) {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Please specify</FormLabel>
+                  <FormLabel>Please specify *</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input {...field} value={field.value || ""} />
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="Please specify your gender"
+                    className="text-base"
+                  />
                 </FormControl>
               </FormItem>
             )}
           />
         )}
-        <FormField
-          control={form.control}
-          name="ageBracket"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Age Bracket *</FormLabel>
-                <FormMessage />
+
+        {/* Face Capture Section */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">9. Photo Capture *</span>
               </div>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select age bracket" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="UNDER_18">Under 18</SelectItem>
-                  <SelectItem value="AGE_18_24">18-24</SelectItem>
-                  <SelectItem value="AGE_25_34">25-34</SelectItem>
-                  <SelectItem value="AGE_35_44">35-44</SelectItem>
-                  <SelectItem value="AGE_45_54">45-54</SelectItem>
-                  <SelectItem value="AGE_55_ABOVE">55 and above</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="nationality"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Nationality *</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      </div>
-      
-      {/* Face Capture Section */}
-      <div className="space-y-4">
-        <h4 className="text-base font-semibold">Face Verification</h4>
+              <p className="text-sm text-muted-foreground">
+                Please capture a clear photo of yourself for identification
+                purposes.
+              </p>
+
+              {/* Use the advanced FaceCapture component */}
+              <FaceCapture
+                onCapture={handleFaceCapture}
+                capturedImage={form.watch("faceScannedUrl")}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hidden field for face scan URL */}
         <FormField
           control={form.control}
           name="faceScannedUrl"
           render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Face Photo</FormLabel>
-                <FormMessage />
-              </div>
-              <FormControl>
-                <FaceCapture
-                  onCapture={(imageDataUrl) => field.onChange(imageDataUrl)}
-                  capturedImage={field.value}
-                />
-              </FormControl>
-            </FormItem>
+            <input type="hidden" {...field} value={field.value || ""} />
           )}
         />
       </div>

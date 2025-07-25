@@ -12,7 +12,7 @@ async function verifyAdminToken(authHeader: string | null) {
 
   const token = authHeader.split(' ')[1];
   let session = getSession(token);
-  
+
   // If session not found in memory, try to recreate it from database
   if (!session) {
     // Try to find a valid admin by checking if token matches expected format
@@ -23,7 +23,7 @@ async function verifyAdminToken(authHeader: string | null) {
         where: { isActive: true },
         select: { id: true, username: true, status: true }
       });
-      
+
       if (admin) {
         // Create a temporary session (this is not ideal but works for development)
         const tempSession = {
@@ -32,7 +32,7 @@ async function verifyAdminToken(authHeader: string | null) {
           status: admin.status,
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours
         };
-        
+
         // Only create session if the token seems valid (basic check)
         if (token && token.length > 10) {
           createSession(token, tempSession);
@@ -43,11 +43,11 @@ async function verifyAdminToken(authHeader: string | null) {
       console.error('Database lookup failed:', dbError);
     }
   }
-  
+
   if (!session) {
     throw new Error('Invalid or expired token');
   }
-  
+
   return session;
 }
 
@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           include: {
-            UserDetails: true,
-            UserAccounts: true,
+            user_details: true,
+            user_accounts: true,
           },
         },
         ConferencePayment: true,
@@ -83,30 +83,30 @@ export async function GET(request: NextRequest) {
       id: conference.id,
       createdAt: conference.createdAt,
       updatedAt: conference.updatedAt,
-      
+
       // Personal Information
       personalInfo: {
-        firstName: conference.user?.UserDetails?.[0]?.firstName || '',
-        lastName: conference.user?.UserDetails?.[0]?.lastName || '',
-        middleName: conference.user?.UserDetails?.[0]?.middleName || '',
-        suffix: conference.user?.UserDetails?.[0]?.suffix || '',
-        preferredName: conference.user?.UserDetails?.[0]?.preferredName || '',
-        gender: conference.user?.UserDetails?.[0]?.gender || '',
-        genderOthers: conference.user?.UserDetails?.[0]?.genderOthers || '',
-        ageBracket: conference.user?.UserDetails?.[0]?.ageBracket || '',
-        nationality: conference.user?.UserDetails?.[0]?.nationality || '',
-        faceScannedUrl: conference.user?.UserDetails?.[0]?.faceScannedUrl || '',
+        firstName: conference.user?.user_details?.[0]?.firstName || '',
+        lastName: conference.user?.user_details?.[0]?.lastName || '',
+        middleName: conference.user?.user_details?.[0]?.middleName || '',
+        suffix: conference.user?.user_details?.[0]?.suffix || '',
+        preferredName: conference.user?.user_details?.[0]?.preferredName || '',
+        gender: conference.user?.user_details?.[0]?.gender || '',
+        genderOthers: conference.user?.user_details?.[0]?.genderOthers || '',
+        ageBracket: conference.user?.user_details?.[0]?.ageBracket || '',
+        nationality: conference.user?.user_details?.[0]?.nationality || '',
+        faceScannedUrl: conference.user?.user_details?.[0]?.faceScannedUrl || '',
       },
-      
+
       // Contact Information
       contactInfo: {
-        email: conference.user?.UserAccounts?.[0]?.email || '',
-        mobileNumber: conference.user?.UserAccounts?.[0]?.mobileNumber || '',
-        landline: conference.user?.UserAccounts?.[0]?.landline || '',
-        mailingAddress: conference.user?.UserAccounts?.[0]?.mailingAddress || '',
-        status: conference.user?.UserAccounts?.[0]?.status || '',
+        email: conference.user?.user_accounts?.[0]?.email || '',
+        mobileNumber: conference.user?.user_accounts?.[0]?.mobileNumber || '',
+        landline: conference.user?.user_accounts?.[0]?.landline || '',
+        mailingAddress: conference.user?.user_accounts?.[0]?.mailingAddress || '',
+        status: conference.user?.user_accounts?.[0]?.status || '',
       },
-      
+
       // Conference-specific Information
       conferenceInfo: {
         isMaritimeLeagueMember: conference.isMaritimeLeagueMember,
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
         photoVideoConsent: conference.photoVideoConsent,
         dataUsageConsent: conference.dataUsageConsent,
       },
-      
+
       // Payment Information
       paymentInfo: {
         totalPaymentAmount: conference.totalPaymentAmount,
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
         paymongoCheckoutId: conference.ConferencePayment?.paymongoCheckoutId || null,
         transactionId: conference.ConferencePayment?.transactionId || null,
       },
-      
+
       // Selected Events
       selectedEvents: conference.summaryOfPayments.map(payment => ({
         id: payment.event.id,

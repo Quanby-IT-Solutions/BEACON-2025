@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { MaritimeLeagueMembership, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { createCheckoutSession, phpToCentavos } from '@/lib/paymongo';
 import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
@@ -22,7 +21,7 @@ async function uploadImageToSupabase(base64Image: string, userId: string): Promi
 
     // Generate file name with user ID
     const fileName = `${userId}/face-scan.jpg`;
-    const filePath = `user-profile/${fileName}`;
+    const filePath = `${fileName}`;
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
@@ -57,7 +56,7 @@ const conferenceRegistrationSchema = z.object({
   selectedEventIds: z.array(z.string()).min(1, 'Please select at least one event'),
   faceScannedUrl: z.string().min(1, 'Face capture is required'),
 
-  // UserDetails fields (matches Prisma UserDetails model)
+  // user_details fields (matches Prisma user_details model)
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   middleName: z.string().optional().nullable(),
@@ -68,13 +67,13 @@ const conferenceRegistrationSchema = z.object({
   ageBracket: z.enum(['UNDER_18', 'AGE_18_24', 'AGE_25_34', 'AGE_35_44', 'AGE_45_54', 'AGE_55_ABOVE']),
   nationality: z.string().min(1, 'Nationality is required'),
 
-  // UserAccounts fields (matches Prisma UserAccounts model)
+  // user_accounts fields (matches Prisma user_accounts model)
   email: z.string().email('Valid email is required'),
   mobileNumber: z.string().min(1, 'Mobile number is required'),
   mailingAddress: z.string().optional().nullable(),
 
   // Conference model fields (matches actual Prisma Conference model)
-  isMaritimeLeagueMember: z.enum(['YES', 'NO', 'APPLY_FOR_MEMBERSHIP']),
+  isMaritimeLeagueMember: z.enum(['YES', 'NO']),
   tmlMemberCode: z.string().optional().nullable(),
 
   // Professional Information (Conference model fields)
@@ -102,8 +101,8 @@ const conferenceRegistrationSchema = z.object({
 
   // Payment Details (Conference model fields)
   totalPaymentAmount: z.number().optional().nullable(),
-  customPaymentAmount: z.string().optional().nullable(),
-  paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH', 'WALK_IN_ON_SITE']).optional().nullable(),
+  paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH']).optional().nullable(),
+  referenceNumber: z.string().optional().nullable(),
 
   // Consent & Confirmation (Conference model fields)
   emailCertificate: z.boolean().default(false),
@@ -114,14 +113,57 @@ const conferenceRegistrationSchema = z.object({
 // POST - Create new conference registration
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const validatedData = conferenceRegistrationSchema.parse(body);
+    const formData = await request.formData();
+
+    // Extract file if present
+    const receiptFile = formData.get('receiptFile') as File | null;
+
+    // Extract other form data
+    const jsonData: any = {};
+    for (const [key, value] of formData.entries()) {
+      if (key !== 'receiptFile') {
+        jsonData[key] = value;
+      }
+    }
+
+    console.log('Raw FormData entries:', Object.fromEntries(formData.entries()));
+    console.log('Parsed jsonData before processing:', jsonData);
+
+    // Parse JSON fields that come as strings from FormData
+    try {
+      if (jsonData.selectedEventIds && typeof jsonData.selectedEventIds === 'string') {
+        jsonData.selectedEventIds = JSON.parse(jsonData.selectedEventIds);
+      }
+      if (jsonData.interestAreas && typeof jsonData.interestAreas === 'string') {
+        jsonData.interestAreas = JSON.parse(jsonData.interestAreas);
+      }
+
+      // Convert string booleans to actual booleans
+      ['dataUsageConsent', 'emailCertificate', 'photoVideoConsent', 'receiveEventInvites'].forEach(field => {
+        if (jsonData[field] !== undefined) {
+          jsonData[field] = jsonData[field] === 'true';
+        }
+      });
+
+      // Convert string numbers to numbers
+      if (jsonData.totalPaymentAmount !== undefined && jsonData.totalPaymentAmount !== '') {
+        jsonData.totalPaymentAmount = parseFloat(jsonData.totalPaymentAmount);
+      }
+
+    } catch (parseError) {
+      console.error('Error parsing FormData fields:', parseError);
+      throw new Error('Invalid form data format');
+    }
+
+    console.log('Processed jsonData before validation:', jsonData);
+
+    const validatedData = conferenceRegistrationSchema.parse(jsonData);
 
     // Separate data for different models
     const {
       selectedEventIds,
       faceScannedUrl,
-      // UserDetails fields
+      // user_details fields
       firstName,
       lastName,
       middleName,
@@ -131,7 +173,7 @@ export async function POST(request: NextRequest) {
       genderOthers,
       ageBracket,
       nationality,
-      // UserAccounts fields
+      // user_accounts fields
       email,
       mobileNumber,
       mailingAddress,
@@ -157,8 +199,8 @@ export async function POST(request: NextRequest) {
         include: {
           user: {
             include: {
-              UserAccounts: true,
-              UserDetails: true,
+              user_accounts: true,
+              user_details: true,
             },
           },
         },
@@ -172,38 +214,38 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if code is already used by someone else
-      if (tmlCode.userId && tmlCode.user?.UserAccounts?.[0]?.email !== email) {
+      if (tmlCode.userId && tmlCode.user?.user_accounts?.[0]?.email !== email) {
         return NextResponse.json({
           success: false,
-          error: `This TML member code is already in use by ${tmlCode.user?.UserDetails?.[0]?.firstName} ${tmlCode.user?.UserDetails?.[0]?.lastName} (${tmlCode.user?.UserAccounts?.[0]?.email}). Please use your own TML member code.`,
+          error: `This TML member code is already in use by ${tmlCode.user?.user_details?.[0]?.firstName} ${tmlCode.user?.user_details?.[0]?.lastName} (${tmlCode.user?.user_accounts?.[0]?.email}). Please use your own TML member code.`,
         }, { status: 400 });
       }
     }
 
     // Check if user already has a registration
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.users.findFirst({
       where: {
-        UserAccounts: {
+        user_accounts: {
           some: {
             email: email
           }
         }
       },
       include: {
-        UserAccounts: true,
-        UserDetails: true,
+        user_accounts: true,
+        user_details: true,
         Conferences: true
       }
     });
 
     let user;
     let userAccount;
-    let userDetails;
+    let user_details;
 
     if (existingUser) {
       user = existingUser;
-      userAccount = existingUser.UserAccounts[0];
-      userDetails = existingUser.UserDetails[0];
+      userAccount = existingUser.user_accounts[0];
+      user_details = existingUser.user_details[0];
 
       // Check if user already has a conference registration
       if (existingUser.Conferences.length > 0) {
@@ -215,7 +257,7 @@ export async function POST(request: NextRequest) {
 
       // Update existing user data if needed
       if (userAccount) {
-        await prisma.userAccounts.update({
+        await prisma.user_accounts.update({
           where: { id: userAccount.id },
           data: {
             email,
@@ -225,9 +267,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      if (userDetails) {
-        await prisma.userDetails.update({
-          where: { id: userDetails.id },
+      if (user_details) {
+        await prisma.user_details.update({
+          where: { id: user_details.id },
           data: {
             firstName,
             lastName,
@@ -244,9 +286,9 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Create new user with accounts and details
-      user = await prisma.user.create({
+      user = await prisma.users.create({
         data: {
-          UserAccounts: {
+          user_accounts: {
             create: {
               email,
               mobileNumber,
@@ -254,7 +296,7 @@ export async function POST(request: NextRequest) {
               status: 'ACTIVE'
             }
           },
-          UserDetails: {
+          user_details: {
             create: {
               firstName,
               lastName,
@@ -270,13 +312,13 @@ export async function POST(request: NextRequest) {
           }
         },
         include: {
-          UserAccounts: true,
-          UserDetails: true
+          user_accounts: true,
+          user_details: true
         }
       });
 
-      userAccount = user.UserAccounts[0];
-      userDetails = user.UserDetails[0];
+      userAccount = user.user_accounts[0];
+      user_details = user.user_details[0];
     }
 
     // Calculate total payment amount based on selected events
@@ -325,91 +367,12 @@ export async function POST(request: NextRequest) {
     console.log("requiresPayment:", requiresPayment);
     console.log("paymentMode:", conferenceData.paymentMode);
 
-    // FOR NON-TML MEMBERS WHO NEED TO PAY ONLINE: REDIRECT TO PAYMENT-FIRST ROUTE
-    if (requiresPayment && conferenceData.paymentMode !== 'WALK_IN_ON_SITE') {
-      console.log("DEBUG - Redirecting to payment-first route...");
-      
-      return NextResponse.json({
-        success: false,
-        error: 'This route should not be used for online payments. Use /api/conference/payment/initiate instead.',
-        redirect: '/api/conference/payment/initiate'
-      }, { status: 400 });
-    }
-
-    // Create PayMongo checkout session if payment is required (only for walk-in now)
-    let paymongoCheckoutSession: any = null;
-    let paymentToken: string | null = null;
-    let paymentTokenExpiry: Date | null = null;
-
-    if (requiresPayment && calculatedAmount > 0) {
-      try {
-        // Create detailed line items for PayMongo
-        const lineItems = selectedEvents.map(event => ({
-          currency: 'PHP',
-          amount: phpToCentavos(Number(event.eventPrice)),
-          description: `${event.eventName} - ${event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}`,
-          name: event.eventName,
-          quantity: 1,
-        }));
-
-        // Add discount line item if applicable
-        const conferenceEvents = selectedEvents.filter(event => event.eventStatus === 'CONFERENCE');
-        if (conferenceEvents.length === 3) {
-          const totalConferenceEvents = await prisma.events.count({
-            where: {
-              eventStatus: 'CONFERENCE',
-              isActive: true
-            }
-          });
-
-          // Don't add negative line items - PayMongo doesn't support them
-          // Discount is already applied to calculatedAmount
-        }
-
-        // Create PayMongo checkout session with detailed information
-        let paymentDescription = `BEACON 2025 Conference Registration - ${firstName} ${lastName}`;
-        if (conferenceEvents.length === 3) {
-          paymentDescription += ` (₱1,500 Conference Package Discount Applied)`;
-        }
-        
-        const checkoutSessionData = await createCheckoutSession({
-          amount: phpToCentavos(calculatedAmount),
-          description: paymentDescription,
-          line_items: lineItems,
-          customer: {
-            name: `${firstName} ${lastName}`,
-            email: email,
-            phone: mobileNumber,
-          },
-          metadata: {
-            conferenceRegistration: true,
-            eventCount: selectedEvents.length,
-            isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember,
-            email: email,
-            firstName: firstName,
-            lastName: lastName,
-            eventNames: selectedEvents.map(e => e.eventName).join(', '),
-          }
-        });
-
-        paymongoCheckoutSession = checkoutSessionData;
-        
-        // Generate fallback payment token for non-PayMongo payments
-        paymentToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        paymentTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours for checkout session
-      } catch (error) {
-        console.error('PayMongo checkout session creation failed:', error);
-        // Fallback to manual payment processing
-        paymentToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        paymentTokenExpiry = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3 hours for manual payment
-      }
-    }
 
     // Create conference registration (only conference-specific fields)
     const conference = await prisma.conference.create({
       data: {
         userId: user.id,
-        isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember,
+        isMaritimeLeagueMember: conferenceData.isMaritimeLeagueMember || MaritimeLeagueMembership.NO,
         tmlMemberCode: conferenceData.tmlMemberCode,
         jobTitle: conferenceData.jobTitle,
         companyName: conferenceData.companyName,
@@ -419,20 +382,14 @@ export async function POST(request: NextRequest) {
         interestAreas: conferenceData.interestAreas,
         otherInterests: conferenceData.otherInterests,
         receiveEventInvites: conferenceData.receiveEventInvites || false,
-        totalPaymentAmount: calculatedAmount,
-        customPaymentAmount: conferenceData.customPaymentAmount,
         emailCertificate: conferenceData.emailCertificate || false,
-        photoVideoConsent: conferenceData.photoVideoConsent || false,
         dataUsageConsent: conferenceData.dataUsageConsent,
-        paymentToken,
-        paymentTokenExpiry,
-        requiresPayment,
       },
       include: {
         user: {
           include: {
-            UserAccounts: true,
-            UserDetails: true
+            user_accounts: true,
+            user_details: true
           }
         },
         summaryOfPayments: {
@@ -459,40 +416,34 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create payment record if payment is required
+    // Create payment record if payment is required OR for TML members (free)
+    let paymentRecord = null;
     if (requiresPayment && calculatedAmount > 0) {
-      const paymentMode = conferenceData.paymentMode || 'GCASH';
-      const isWalkInPayment = paymentMode === 'WALK_IN_ON_SITE';
-      
-      await prisma.conferencePayment.create({
+      // Non-TML members who need to pay
+      const paymentMode = conferenceData.paymentMode || 'BANK_DEPOSIT_TRANSFER';
+
+      paymentRecord = await prisma.conferencePayment.create({
         data: {
           conferenceId: conference.id,
           totalAmount: calculatedAmount,
           paymentMode: paymentMode,
-          // Walk-in payments start as PENDING (awaiting on-site payment)
-          // Online payments start as PENDING (awaiting PayMongo confirmation)
-          paymentStatus: 'PENDING',
-          customPaymentAmount: conferenceData.customPaymentAmount,
-          
-          // PayMongo integration fields (only for online payments)
-          paymongoCheckoutId: paymongoCheckoutSession?.id || null,
-          paymongoPaymentId: null, // Will be filled by webhook/verification
-          paymongoIntentId: paymongoCheckoutSession?.attributes?.payment_intent_id || null,
-          paymongoWebhookId: null, // Will be filled by webhook
-          paymongoPaymentMethod: null, // Will be filled by webhook
-          paymongoReferenceId: null, // Will be filled by webhook
-          
-          // Payment confirmation
-          isPaid: false, // Will be set to true when payment is confirmed
-          paymentConfirmedAt: null,
-          paymentConfirmedBy: null,
-          
-          // Notes based on payment type
-          notes: isWalkInPayment 
-            ? 'Walk-in payment - Awaiting on-site payment confirmation'
-            : paymongoCheckoutSession 
-              ? 'Online payment - PayMongo checkout session created, awaiting payment confirmation'
-              : 'Manual payment processing required',
+          paymentStatus: 'PENDING', // Will be updated to CONFIRMED after receipt upload
+          receiptImageUrl: null, // Will be updated after file upload
+          referenceNumber: conferenceData.referenceNumber || null,
+          notes: 'Payment pending - Receipt upload in progress',
+        }
+      });
+    } else if (conferenceData.isMaritimeLeagueMember === 'YES') {
+      // TML members get free registration with CONFIRMED status
+      paymentRecord = await prisma.conferencePayment.create({
+        data: {
+          conferenceId: conference.id,
+          totalAmount: 0, // Free for TML members
+          paymentMode: 'FREE', // Default payment mode for free registration
+          paymentStatus: 'CONFIRMED', // Automatically confirmed for TML members
+          receiptImageUrl: null, // No receipt needed for free registration
+          referenceNumber: null,
+          notes: 'Free registration for TML member - Automatically confirmed',
         }
       });
     }
@@ -508,7 +459,7 @@ export async function POST(request: NextRequest) {
             userId: user.id,
           },
         });
-        
+
         console.log('TML member code marked as used:', conferenceData.tmlMemberCode.trim(), 'by user:', user.id);
       } catch (error) {
         console.error('Failed to mark TML code as used:', error);
@@ -523,19 +474,19 @@ export async function POST(request: NextRequest) {
       try {
         faceImageUrl = await uploadImageToSupabase(faceScannedUrl, user.id);
 
-        // Update UserDetails with the face image URL
-        // Use the userDetails variable we already have from user creation/retrieval
-        const userDetailsId = userDetails?.id;
-        
-        if (userDetailsId) {
-          await prisma.userDetails.update({
-            where: { id: userDetailsId },
+        // Update user_details with the face image URL
+        // Use the user_details variable we already have from user creation/retrieval
+        const user_detailsId = user_details?.id;
+
+        if (user_detailsId) {
+          await prisma.user_details.update({
+            where: { id: user_detailsId },
             data: {
               faceScannedUrl: faceImageUrl,
             },
           });
         } else {
-          console.error("Conference API: UserDetails ID not found for user:", user.id);
+          console.error("Conference API: user_details ID not found for user:", user.id);
         }
 
         console.log("Conference API: Face image uploaded and URL updated successfully");
@@ -546,6 +497,64 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Handle receipt file upload if provided and payment is required
+    let receiptImageUrl: string | null = null;
+    if (receiptFile && paymentRecord && requiresPayment) {
+      console.log("Conference API: Uploading receipt image to Supabase");
+      try {
+        // Generate file name with user ID and timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const fileExtension = receiptFile.name.split('.').pop() || 'jpg';
+        const fileName = `${user.id}/receipt-${timestamp}.${fileExtension}`;
+        const filePath = fileName;
+
+        // Upload to Supabase Storage - 'receipt' bucket  
+        const { data, error } = await supabase.storage
+          .from('receipt')
+          .upload(filePath, receiptFile, {
+            contentType: receiptFile.type,
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (error) {
+          console.error('Supabase receipt upload error:', error);
+          throw new Error(`Failed to upload receipt: ${error.message}`);
+        }
+
+        // Get public URL
+        const { data: publicData } = supabase.storage
+          .from('receipt')
+          .getPublicUrl(filePath);
+
+        receiptImageUrl = publicData.publicUrl;
+
+        // Update payment record with receipt URL and mark as CONFIRMED
+        await prisma.conferencePayment.update({
+          where: { id: paymentRecord.id },
+          data: {
+            receiptImageUrl: receiptImageUrl,
+            paymentStatus: 'CONFIRMED',
+            notes: 'Payment confirmed - Receipt uploaded during registration',
+            updatedAt: new Date()
+          }
+        });
+
+        console.log("Conference API: Receipt image uploaded and payment confirmed successfully");
+      } catch (receiptError) {
+        console.error("Conference API: Receipt image upload failed:", receiptError);
+        // Update payment with error note but don't fail the registration
+        if (paymentRecord) {
+          await prisma.conferencePayment.update({
+            where: { id: paymentRecord.id },
+            data: {
+              notes: 'Registration completed but receipt upload failed - Please contact support',
+            }
+          });
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -553,13 +562,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         requiresPayment,
         totalAmount: calculatedAmount,
-        paymentToken,
-        paymentTokenExpiry,
         faceImageUrl: faceImageUrl,
-        // PayMongo integration data
-        paymongoCheckoutId: paymongoCheckoutSession?.id || null,
-        paymongoCheckoutUrl: paymongoCheckoutSession?.attributes?.checkout_url || null,
-        paymentMethods: requiresPayment ? ['gcash', 'card', 'paymaya', 'bank_transfer', 'walk_in'] : null,
+        receiptImageUrl: receiptImageUrl,
       }
     }, { status: 201 });
 
@@ -567,14 +571,19 @@ export async function POST(request: NextRequest) {
     console.error('Conference registration error:', error);
 
     if (error instanceof z.ZodError) {
+      console.error('Validation errors:', error.issues);
       return NextResponse.json(
-        { error: 'Validation failed', details: error.issues },
+        {
+          error: 'Validation failed',
+          details: error.issues,
+          message: error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ')
+        },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   } finally {
@@ -612,8 +621,8 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           include: {
-            UserAccounts: true,
-            UserDetails: true
+            user_accounts: true,
+            user_details: true
           }
         },
         ConferencePayment: true,
@@ -667,8 +676,8 @@ export async function PUT(request: NextRequest) {
       include: {
         user: {
           include: {
-            UserAccounts: true,
-            UserDetails: true
+            user_accounts: true,
+            user_details: true
           }
         },
         ConferencePayment: true,

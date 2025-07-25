@@ -28,12 +28,12 @@ export async function POST(request: NextRequest) {
         user: {
           select: {
             id: true,
-            UserAccounts: {
+            user_accounts: {
               select: {
                 email: true
               }
             },
-            UserDetails: {
+            user_details: {
               select: {
                 firstName: true,
                 lastName: true
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
         error: 'Code already used',
         message: 'This TML member code has already been used by another user.',
         usedBy: codeDistribution.user ? {
-          name: `${codeDistribution.user.UserDetails[0]?.firstName} ${codeDistribution.user.UserDetails[0]?.lastName}`,
-          email: codeDistribution.user.UserAccounts[0]?.email
+          name: `${codeDistribution.user.user_details[0]?.firstName} ${codeDistribution.user.user_details[0]?.lastName}`,
+          email: codeDistribution.user.user_accounts[0]?.email
         } : null
       }, { status: 409 });
     }
@@ -153,7 +153,7 @@ export async function PUT(request: NextRequest) {
         user: {
           select: {
             id: true,
-            UserDetails: {
+            user_details: {
               select: {
                 firstName: true,
                 lastName: true
@@ -197,12 +197,12 @@ export async function GET(request: NextRequest) {
           user: {
             select: {
               id: true,
-              UserAccounts: {
+              user_accounts: {
                 select: {
                   email: true
                 }
               },
-              UserDetails: {
+              user_details: {
                 select: {
                   firstName: true,
                   lastName: true
@@ -240,12 +240,12 @@ export async function GET(request: NextRequest) {
         user: {
           select: {
             id: true,
-            UserAccounts: {
+            user_accounts: {
               select: {
                 email: true
               }
             },
-            UserDetails: {
+            user_details: {
               select: {
                 firstName: true,
                 lastName: true

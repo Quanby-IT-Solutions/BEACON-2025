@@ -49,9 +49,10 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
       requiredFields.push("tmlMemberCode");
     }
 
-    // Add payment mode if payment required
+    // Add payment mode and receipt if payment required
     if (requiresPayment) {
       requiredFields.push("paymentMode");
+      requiredFields.push("receiptImageUrl");
     }
 
     total = requiredFields.length;
@@ -65,6 +66,12 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
         if (Array.isArray(value) && value.length > 0) completed++;
       } else if (field === "dataUsageConsent") {
         if (value === true) completed++;
+      } else if (field === "receiptImageUrl") {
+        // Check for File object (receipt upload)
+        if (value instanceof File) completed++;
+      } else if (field === "faceScannedUrl") {
+        // Check for base64 string (face capture)
+        if (typeof value === "string" && value.length > 0 && value !== "") completed++;
       } else if (value && value !== "" && value !== null && value !== undefined) {
         completed++;
       }

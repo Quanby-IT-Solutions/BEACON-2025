@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { UseFormReturn } from "react-hook-form";
 import {
   FormField,
@@ -24,9 +24,12 @@ import {
   Smartphone,
   Building,
   Users,
+  Upload,
+  ImageIcon,
 } from "lucide-react";
 import { PaymentDetailsProps } from "@/types/conference/components";
 import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
+import { toast } from "sonner";
 
 export default function PaymentDetails({ form }: PaymentDetailsProps) {
   const {
@@ -38,9 +41,40 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
     calculateTotalAmount,
   } = useConferenceRegistrationStore();
   const [paymentMethod, setPaymentMethod] = useState<string>("GCASH");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatPrice = (price: number) => {
     return price === 0 ? "FREE" : `₱${price.toLocaleString()}`;
+  };
+
+  // Handle file selection for receipt upload
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    // Store file in form
+    form.setValue("receiptImageUrl", file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setPreviewUrl(result);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Update form when payment method changes
@@ -155,19 +189,6 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
                     Online banking or over-the-counter transfer
                   </p>
                 </div>
-
-                <div className="flex-1 flex items-center gap-3">
-                  <RadioGroupItem value="WALK_IN_ON_SITE" id="walkin" />
-                  <label
-                    htmlFor="walkin"
-                    className="font-medium cursor-pointer"
-                  >
-                    Walk-in Payment
-                  </label>
-                  <p className="text-sm text-muted-foreground">
-                    Pay on-site during the event
-                  </p>
-                </div>
               </RadioGroup>
             </FormControl>
             <FormMessage />
@@ -187,36 +208,6 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
       )}
 
       {/* Custom Payment Amount (if needed) */}
-
-      <FormField
-        control={form.control}
-        name="customPaymentAmount"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              2. Additional Amount{" "}
-              <span className="text-blue-800 font-medium">
-                (Optional only if you want to Donate)
-              </span>
-            </FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                value={field.value || ""}
-                placeholder="Enter additional amount (optional)"
-                type="number"
-                min="0"
-                step="0.01"
-              />
-            </FormControl>
-            <p className="text-sm text-muted-foreground">
-              Add any additional amount if you wish to make a donation or pay
-              for extras.
-            </p>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
 
       {/* Payment Summary */}
       <Card className="border-blue-200 bg-blue-50">
@@ -241,6 +232,108 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
               <span>Total Amount:</span>
               <span>{formatPrice(totalAmount)}</span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Receipt Upload Section */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base text-orange-800 flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            2. Upload Payment Receipt *
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Alert className="border-orange-300 bg-orange-100">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Required:</strong> Please upload your payment receipt
+                for verification. Without a valid receipt, your registration
+                cannot be processed.
+              </AlertDescription>
+            </Alert>
+
+            <FormField
+              control={form.control}
+              name="receiptImageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Receipt Image</FormLabel>
+                  <FormControl>
+                    <div className="space-y-3">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full h-32 border-dashed border-orange-300 hover:border-orange-400"
+                      >
+                        {previewUrl ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <ImageIcon className="w-6 h-6 text-orange-600" />
+                            <span className="text-sm text-orange-800">
+                              Receipt Uploaded
+                            </span>
+                            <span className="text-xs text-orange-600">
+                              Click to change
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="w-6 h-6 text-orange-600" />
+                            <span className="text-sm text-orange-800">
+                              Click to select receipt
+                            </span>
+                            <span className="text-xs text-orange-600">
+                              PNG, JPG up to 5MB
+                            </span>
+                          </div>
+                        )}
+                      </Button>
+
+                      {previewUrl && (
+                        <div className="relative">
+                          <img
+                            src={previewUrl}
+                            alt="Receipt preview"
+                            className="w-full h-40 object-cover rounded-md border border-orange-200"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="referenceNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reference Number (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ""}
+                      placeholder="Enter transaction reference number"
+                      className="border-orange-200 focus:border-orange-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </CardContent>
       </Card>

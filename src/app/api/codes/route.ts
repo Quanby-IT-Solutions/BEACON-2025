@@ -18,13 +18,13 @@ export async function GET() {
         user: {
           select: {
             id: true,
-            UserDetails: {
+            user_details: {
               select: {
                 firstName: true,
                 lastName: true,
               }
             },
-            UserAccounts: {
+            user_accounts: {
               select: {
                 email: true,
               }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const {
       id,
       code,
@@ -195,8 +195,8 @@ export async function DELETE(request: NextRequest) {
     // Check if code has been used (has userId)
     if (existingCode.userId) {
       return NextResponse.json(
-        { 
-          error: "Cannot delete code that has been used by a member. Please deactivate the code instead." 
+        {
+          error: "Cannot delete code that has been used by a member. Please deactivate the code instead."
         },
         { status: 400 }
       );

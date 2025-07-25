@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check if email exists in UserAccounts
-    const existingUser = await prisma.userAccounts.findUnique({
+    // Check if email exists in user_accounts
+    const existingUser = await prisma.user_accounts.findUnique({
       where: {
         email: email
       }

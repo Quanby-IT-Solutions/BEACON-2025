@@ -12,7 +12,7 @@ async function verifyAdminToken(authHeader: string | null) {
 
   const token = authHeader.split(' ')[1];
   let session = getSession(token);
-  
+
   // If session not found in memory, try to recreate it from database
   if (!session) {
     try {
@@ -20,7 +20,7 @@ async function verifyAdminToken(authHeader: string | null) {
         where: { isActive: true },
         select: { id: true, username: true, status: true }
       });
-      
+
       if (admin) {
         const tempSession = {
           adminId: admin.id,
@@ -28,7 +28,7 @@ async function verifyAdminToken(authHeader: string | null) {
           status: admin.status,
           expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000)
         };
-        
+
         if (token && token.length > 10) {
           createSession(token, tempSession);
           session = tempSession;
@@ -38,11 +38,11 @@ async function verifyAdminToken(authHeader: string | null) {
       console.error('Database lookup failed:', dbError);
     }
   }
-  
+
   if (!session) {
     throw new Error('Invalid or expired token');
   }
-  
+
   return session;
 }
 
@@ -88,12 +88,12 @@ export async function DELETE(
       // If there's a user ID, delete related user data
       if (visitor.userId) {
         // Delete user details
-        await tx.userDetails.deleteMany({
+        await tx.user_details.deleteMany({
           where: { userId: visitor.userId },
         });
 
         // Delete user accounts
-        await tx.userAccounts.deleteMany({
+        await tx.user_accounts.deleteMany({
           where: { userId: visitor.userId },
         });
 
@@ -119,7 +119,7 @@ export async function DELETE(
           message: 'Unauthorized',
         }, { status: 401 });
       }
-      
+
       if (error.message.includes('Access denied')) {
         return NextResponse.json({
           success: false,

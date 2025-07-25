@@ -27,7 +27,7 @@ export type Database = {
           userId: string
           createdAt: string
           updatedAt: string
-          isMaritimeLeagueMember: 'YES' | 'NO' | 'APPLY_FOR_MEMBERSHIP'
+          isMaritimeLeagueMember: 'YES' | 'NO'
           tmlMemberCode: string | null
           registerForConference: boolean
           registerBoatShow: boolean

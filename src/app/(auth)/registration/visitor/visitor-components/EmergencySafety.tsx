@@ -17,56 +17,53 @@ interface EmergencySafetyProps {
 export function EmergencySafety({ form }: EmergencySafetyProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Emergency & Safety</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
-          name="specialAssistance"
+          name="emergencyContactPerson"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel>Special Assistance Needed</FormLabel>
+                <FormLabel>1. Emergency Contact Person *</FormLabel>
                 <FormMessage />
               </div>
               <FormControl>
-                <Textarea {...field} value={field.value || ""} />
+                <Input {...field} />
               </FormControl>
             </FormItem>
           )}
         />
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="emergencyContactPerson"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel>Emergency Contact Person *</FormLabel>
-                  <FormMessage />
-                </div>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="emergencyContactNumber"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel>Emergency Contact Number *</FormLabel>
-                  <FormMessage />
-                </div>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="emergencyContactNumber"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel>2. Emergency Contact Number *</FormLabel>
+                <FormMessage />
+              </div>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </div>
+      <FormField
+        control={form.control}
+        name="specialAssistance"
+        render={({ field }) => (
+          <FormItem>
+            <div className="flex items-center justify-between">
+              <FormLabel>3. Special Assistance Needed</FormLabel>
+              <FormMessage />
+            </div>
+            <FormControl>
+              <Textarea {...field} value={field.value || ""} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

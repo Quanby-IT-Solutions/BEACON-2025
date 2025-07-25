@@ -113,7 +113,7 @@ enum MaritimeLeagueMembership {
 enum PaymentMode {
   BANK_DEPOSIT_TRANSFER
   GCASH
-  WALK_IN_ON_SITE
+  FREE
 }
 
 enum PaymentStatus {
@@ -136,6 +136,19 @@ enum ConferenceInterestArea {
   OTHERS
 }
 
+enum EventStatusEnum {
+  CONFERENCE
+  SHOW
+  WORKSHOP
+  SEMINAR
+  EXHIBITION
+}
+
+enum ManagerStatus {
+  SUPERADMIN
+  ADMIN
+}
+
 //=================================
 // MODELS
 //=================================
@@ -151,36 +164,40 @@ model ManagerAccount {
   @@map("manager_accounts")
 }
 
-model User {
-  id           String         @id @default(cuid())
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  UserAccounts UserAccounts[]
-  UserDetails  UserDetails[]
-  Visitors     Visitors[]
-  Conferences  Conference[]
+model Users {
+  id            String          @id @default(cuid())
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  user_accounts user_accounts[]
+  user_details  user_details[]
+  Visitors      Visitors[]
+  Conferences   Conference[]
 
   CodeDistribution CodeDistribution[]
+
+  @@map("users")
 }
 
-model UserAccounts {
+model user_accounts {
   id             String       @id @default(uuid())
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
   status         ActiveStatus @default(PENDING)
   userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user           Users        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 2: Account Details
   email          String       @unique
   mobileNumber   String
   mailingAddress String?
   landline       String?
+
+  @@map("user_accounts")
 }
 
-model UserDetails {
+model user_details {
   id             String     @id @default(uuid())
   userId         String
-  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user           Users      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Section 1: Personal Information
   firstName      String
   lastName       String
@@ -192,6 +209,8 @@ model UserDetails {
   genderOthers   String?
   ageBracket     AgeBracket
   nationality    String
+
+  @@map("user_details")
 }
 
 // BEACON 2025 Registration Models
@@ -230,7 +249,9 @@ model Visitors {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user Users? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("visitors")
 }
 
 // BEACON 2025 Conference-specific Registration Model
@@ -257,23 +278,12 @@ model Conference {
   otherInterests      String?
   receiveEventInvites Boolean                  @default(false)
 
-  // Section 5: Payment Details (calculated field based on selections)
-  totalPaymentAmount  Decimal?
-  customPaymentAmount String? // For "Other amount" field
-
   // Section 6: Consent & Confirmation
-  emailCertificate  Boolean @default(false)
-  photoVideoConsent Boolean @default(false)
-  dataUsageConsent  Boolean // Required field
-
-  // Payment Processing (for non-maritime league members)
-  paymentToken       String? // Token for payment link
-  paymentTokenExpiry DateTime? // 3-hour expiration
-  requiresPayment    Boolean   @default(false) // Based on maritime league membership
+  emailCertificate Boolean @default(false)
+  dataUsageConsent Boolean // Required field
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
+  user              Users               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   ConferencePayment ConferencePayment?
   summaryOfPayments SummaryOfPayments[] // One-to-many with selected events
 
@@ -288,29 +298,12 @@ model ConferencePayment {
   updatedAt    DateTime @updatedAt
 
   // Payment Details - Conference Specific
-  totalAmount         Decimal
-  paymentMode         PaymentMode
-  paymentStatus       PaymentStatus @default(PENDING)
-  customPaymentAmount String? // For "Other amount" field from form
-  transactionId       String?
-  proofOfPaymentUrl   String? // File path or URL for uploaded proof
-  paymentDate         DateTime?
-
-  // PayMongo Integration Fields
-  paymongoPaymentId     String? // PayMongo payment ID
-  paymongoCheckoutId    String? // PayMongo checkout session ID
-  paymongoIntentId      String? // PayMongo payment intent ID
-  paymongoWebhookId     String? // PayMongo webhook event ID for confirmation
-  paymongoPaymentMethod String? // card, gcash, grabpay, etc.
-  paymongoReferenceId   String? // PayMongo reference number
-
-  // Payment Confirmation
-  isPaid             Boolean   @default(false) // Confirmed payment status
-  paymentConfirmedAt DateTime? // When payment was confirmed
-  paymentConfirmedBy String? // webhook, manual, etc.
-
-  // Payment Notes
-  notes String?
+  totalAmount     Decimal
+  referenceNumber String?
+  receiptImageUrl String?
+  notes           String?
+  paymentMode     PaymentMode   @default(BANK_DEPOSIT_TRANSFER)
+  paymentStatus   PaymentStatus @default(PENDING)
 
   // Relations - ONLY linked to Conference
   conference Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -339,17 +332,17 @@ model SummaryOfPayments {
 }
 
 model Events {
-  id          String          @id @default(uuid())
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  eventName   String
-  eventDate   DateTime
-  eventPrice  Decimal
-  eventStatus EventStatusEnum
-  isActive    Boolean         @default(true)
-  description String?
+  id             String          @id @default(uuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  eventName      String
+  eventDate      DateTime
+  eventPrice     Decimal
+  eventStatus    EventStatusEnum
+  isActive       Boolean         @default(true)
+  description    String?
   eventStartTime DateTime?
-  eventEndTime DateTime?
+  eventEndTime   DateTime?
 
   // Relations
   summaryOfPayments SummaryOfPayments[]
@@ -366,20 +359,7 @@ model CodeDistribution {
   userId    String? // User ID who used the code
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user Users? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("code_distribution")
-}
-
-enum EventStatusEnum {
-  CONFERENCE
-  SHOW
-  WORKSHOP
-  SEMINAR
-  EXHIBITION
-}
-
-enum ManagerStatus {
-  SUPERADMIN
-  ADMIN
 }

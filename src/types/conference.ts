@@ -2,7 +2,7 @@
 // Based on Prisma schema and API structure
 
 // Enum types from schema
-export type MaritimeLeagueMembership = 'YES' | 'NO' | 'APPLY_FOR_MEMBERSHIP';
+export type MaritimeLeagueMembership = 'YES' | 'NO';
 export type ConferenceDuration = 'ONE_DAY' | 'TWO_DAYS' | 'THREE_DAYS';
 export type PaymentMode = 'BANK_DEPOSIT_TRANSFER' | 'GCASH' | 'WALK_IN_ON_SITE';
 export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'REFUNDED';
@@ -162,8 +162,8 @@ export interface UserWithDetails {
   id: string;
   created_at: Date;
   updated_at: Date;
-  UserAccounts: UserAccount[];
-  UserDetails: UserDetail[];
+  user_accounts: UserAccount[];
+  user_details: UserDetail[];
 }
 
 export interface UserAccount {
