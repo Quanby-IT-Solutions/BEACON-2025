@@ -31,8 +31,25 @@ interface ConferenceAPIError {
 const registerForConference = async (data: ConferenceRegistrationFormData): Promise<ConferenceRegistrationResponse> => {
   console.log("Sending conference registration data:", data);
 
-  // Fallback to old approach due to PayMongo 500 errors
-  const response = await fetch("/api/conference", {
+  // Determine payment requirements
+  const requiresPayment = data.isMaritimeLeagueMember === 'NO' && data.totalPaymentAmount && data.totalPaymentAmount > 0;
+  const isOnlinePayment = data.paymentMode && data.paymentMode !== 'WALK_IN_ON_SITE';
+
+  console.log("Payment decision logic:", {
+    requiresPayment,
+    isOnlinePayment,
+    paymentMode: data.paymentMode,
+    totalAmount: data.totalPaymentAmount
+  });
+
+  // Use payment-first route for online payments, immediate route for TML members and walk-in payments
+  const endpoint = (requiresPayment && isOnlinePayment) 
+    ? "/api/conference/payment/initiate" 
+    : "/api/conference";
+
+  console.log("Using endpoint:", endpoint);
+
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

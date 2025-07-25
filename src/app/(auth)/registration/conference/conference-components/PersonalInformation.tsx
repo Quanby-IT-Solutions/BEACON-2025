@@ -1,6 +1,5 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -17,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, User } from "lucide-react";
 import {
   genderOptions,
   ageBracketOptions,
@@ -37,31 +35,21 @@ export default function PersonalInformation({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <User className="h-5 w-5 text-blue-600" />
-          Personal Information
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Please provide your personal details for registration.
-        </p>
-      </div>
-
       <div className="space-y-4">
         {/* Name Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <FormField
             control={form.control}
             name="firstName"
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>First Name *</FormLabel>
+                  <FormLabel>1. First Name *</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     placeholder="First name"
                     className="text-base"
                   />
@@ -76,12 +64,12 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Last Name *</FormLabel>
+                  <FormLabel>2. Last Name *</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     placeholder="Last name"
                     className="text-base"
                   />
@@ -89,21 +77,18 @@ export default function PersonalInformation({
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="middleName"
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Middle Name</FormLabel>
+                  <FormLabel>3. Middle Name</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     value={field.value || ""}
                     placeholder="Middle name (optional)"
                     className="text-base"
@@ -119,12 +104,12 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Suffix</FormLabel>
+                  <FormLabel>4. Suffix</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     value={field.value || ""}
                     placeholder="Jr., Sr., III, etc. (optional)"
                     className="text-base"
@@ -135,7 +120,7 @@ export default function PersonalInformation({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Preferred Name */}
           <FormField
             control={form.control}
@@ -143,7 +128,7 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Preferred Name</FormLabel>
+                  <FormLabel>5. Preferred Name</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
@@ -164,7 +149,7 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Nationality *</FormLabel>
+                  <FormLabel>6. Nationality *</FormLabel>
                   <FormMessage />
                 </div>
                 <FormControl>
@@ -176,9 +161,6 @@ export default function PersonalInformation({
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Gender */}
           <FormField
             control={form.control}
@@ -186,12 +168,12 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Gender *</FormLabel>
+                  <FormLabel>7. Gender *</FormLabel>
                   <FormMessage />
                 </div>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                   </FormControl>
@@ -214,12 +196,12 @@ export default function PersonalInformation({
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel>Age Bracket *</FormLabel>
+                  <FormLabel>8. Age Bracket *</FormLabel>
                   <FormMessage />
                 </div>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select age bracket" />
                     </SelectTrigger>
                   </FormControl>
@@ -248,8 +230,8 @@ export default function PersonalInformation({
                   <FormMessage />
                 </div>
                 <FormControl>
-                  <Input 
-                    {...field} 
+                  <Input
+                    {...field}
                     value={field.value || ""}
                     placeholder="Please specify your gender"
                     className="text-base"
@@ -265,15 +247,15 @@ export default function PersonalInformation({
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Camera className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">Photo Capture *</span>
+                <span className="font-medium">9. Photo Capture *</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Please capture a clear photo of yourself for identification purposes.
+                Please capture a clear photo of yourself for identification
+                purposes.
               </p>
-              
+
               {/* Use the advanced FaceCapture component */}
-              <FaceCapture 
+              <FaceCapture
                 onCapture={handleFaceCapture}
                 capturedImage={form.watch("faceScannedUrl")}
               />

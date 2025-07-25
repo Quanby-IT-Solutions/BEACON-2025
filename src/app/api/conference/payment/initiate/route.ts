@@ -58,6 +58,7 @@ const conferenceRegistrationSchema = z.object({
   totalPaymentAmount: z.number().optional().nullable(),
   customPaymentAmount: z.string().optional().nullable(),
   paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH', 'WALK_IN_ON_SITE']).optional().nullable(),
+  hasConferenceDiscount: z.boolean().optional(),
 
   // Consent & Confirmation
   emailCertificate: z.boolean().default(false),
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Get selected events and calculate amount
     console.log("Fetching events for IDs:", validatedData.selectedEventIds);
-    
+
     const selectedEvents = await prisma.events.findMany({
       where: {
         id: { in: validatedData.selectedEventIds },
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
         found: selectedEvents.map(e => e.id)
       });
       return NextResponse.json(
-        { 
+        {
           error: 'Some selected events were not found or are inactive',
           details: {
             requested: validatedData.selectedEventIds,
@@ -155,32 +156,95 @@ export async function POST(request: NextRequest) {
     const paymentMode = validatedData.paymentMode || 'GCASH';
     const isWalkInPayment = paymentMode === 'WALK_IN_ON_SITE';
 
+    console.log("DEBUG - Payment decision logic:");
+    console.log("isMaritimeLeagueMember:", validatedData.isMaritimeLeagueMember);
+    console.log("calculatedAmount:", calculatedAmount);
+    console.log("requiresPayment:", requiresPayment);
+    console.log("paymentMode:", paymentMode);
+    console.log("isWalkInPayment:", isWalkInPayment);
+
     // For TML members or walk-in payments, create records immediately
     if (!requiresPayment || isWalkInPayment) {
+      console.log("DEBUG - Creating records immediately (TML member or walk-in)");
       // Create records directly for non-payment or walk-in cases
       return await createConferenceRegistration(validatedData, selectedEvents, calculatedAmount, false);
     }
 
+    console.log("DEBUG - Payment required, proceeding to PayMongo checkout...");
+
     // For online payments, create PayMongo session with ALL form data in metadata
     try {
-      // Create detailed line items (without separate discount line item)
-      const lineItems = selectedEvents.map(event => ({
-        currency: 'PHP',
-        amount: phpToCentavos(Number(event.eventPrice)),
-        description: `${event.eventName} - ${event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}`,
-        name: event.eventName,
-        quantity: 1,
-      }));
+      // Create line items based on discount logic
+      const lineItems = [];
+      
+      // Check if conference discount is applied
+      const conferenceEvents = selectedEvents.filter(event => event.eventStatus === 'CONFERENCE');
+      const hasConferenceDiscount = validatedData.hasConferenceDiscount === true;
+      
+      console.log("DEBUG - Line items logic:");
+      console.log("conferenceEvents count:", conferenceEvents.length);
+      console.log("hasConferenceDiscount from form:", validatedData.hasConferenceDiscount);
+      console.log("final hasConferenceDiscount:", hasConferenceDiscount);
+      
+      if (hasConferenceDiscount && conferenceEvents.length === 3) {
+        // Show combined conference package with discount
+        lineItems.push({
+          currency: 'PHP',
+          amount: phpToCentavos(7500), // ₱11,000 - ₱1,500 = ₱7,500
+          description: 'All 3 Conference Events Package (₱1,500 discount applied)',
+          name: 'BEACON 2025 Conference Package',
+          quantity: 1,
+        });
+        
+        // Add non-conference events individually
+        const nonConferenceEvents = selectedEvents.filter(event => event.eventStatus !== 'CONFERENCE');
+        nonConferenceEvents.forEach(event => {
+          lineItems.push({
+            currency: 'PHP',
+            amount: phpToCentavos(Number(event.eventPrice)),
+            description: `${event.eventName} - ${event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}`,
+            name: event.eventName,
+            quantity: 1,
+          });
+        });
+      } else {
+        // Show individual line items for all events
+        selectedEvents.forEach(event => {
+          lineItems.push({
+            currency: 'PHP',
+            amount: phpToCentavos(Number(event.eventPrice)),
+            description: `${event.eventName} - ${event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}`,
+            name: event.eventName,
+            quantity: 1,
+          });
+        });
+      }
+      
+      // Add custom donation if provided
+      if (validatedData.customPaymentAmount) {
+        const customAmount = parseFloat(validatedData.customPaymentAmount);
+        if (!isNaN(customAmount) && customAmount > 0) {
+          lineItems.push({
+            currency: 'PHP',
+            amount: phpToCentavos(customAmount),
+            description: 'Additional donation to support BEACON 2025',
+            name: 'Donation',
+            quantity: 1,
+          });
+        }
+      }
+      
+      console.log("DEBUG - PayMongo line items created:", JSON.stringify(lineItems, null, 2));
 
       // Add a summary line item if discount is applied (show total with discount)
       let description = `BEACON 2025 Conference Registration - ${validatedData.firstName} ${validatedData.lastName}`;
-      if (conferenceEvents.length === 3) {
+      if (hasConferenceDiscount) {
         description += ` (₱1,500 Conference Package Discount Applied)`;
       }
 
       // Generate registration reference for temporary storage
       const registrationRef = `conf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Store large registration data temporarily (to avoid PayMongo metadata size limits)
       try {
         const tempStoreResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/conference/payment/temp-store`, {
@@ -203,17 +267,29 @@ export async function POST(request: NextRequest) {
 
         const storeResult = await tempStoreResponse.json();
         console.log('Successfully stored temporary registration data with ref:', registrationRef, storeResult);
-        
+
       } catch (error) {
         console.error('Error storing temporary registration data:', error);
         throw new Error('Failed to store registration data for payment processing');
       }
+
+      // Map payment mode to PayMongo payment method types
+      let paymentMethodTypes: string[] = ['gcash', 'card', 'paymaya', 'bank_transfer'];
+      
+      if (paymentMode === 'GCASH') {
+        paymentMethodTypes = ['gcash'];
+      } else if (paymentMode === 'BANK_DEPOSIT_TRANSFER') {
+        paymentMethodTypes = ['bank_transfer'];
+      }
+      
+      console.log('DEBUG - Payment method types for PayMongo:', paymentMethodTypes);
 
       // Create PayMongo checkout session with minimal metadata
       const checkoutSessionData = await createCheckoutSession({
         amount: phpToCentavos(calculatedAmount),
         description: description,
         line_items: lineItems,
+        payment_method_types: paymentMethodTypes,
         customer: {
           name: `${validatedData.firstName} ${validatedData.lastName}`,
           email: validatedData.email,
@@ -223,17 +299,17 @@ export async function POST(request: NextRequest) {
           // Registration flags
           conferenceRegistration: 'true',
           paymentFirst: 'true',
-          
+
           // Event data (simplified)
           eventCount: selectedEvents.length.toString(),
           eventIds: validatedData.selectedEventIds.join(','),
           totalAmount: calculatedAmount.toString(),
-          
+
           // Essential user data only
           email: validatedData.email,
           firstName: validatedData.firstName,
           lastName: validatedData.lastName,
-          
+
           // Reference to retrieve full data
           registrationRef: registrationRef,
         }
@@ -355,6 +431,25 @@ async function createConferenceRegistration(
     });
   }
 
+  // Mark TML code as used if it was provided and valid
+  if (validatedData.isMaritimeLeagueMember === 'YES' && validatedData.tmlMemberCode) {
+    try {
+      await prisma.codeDistribution.update({
+        where: {
+          code: validatedData.tmlMemberCode.trim(),
+        },
+        data: {
+          userId: user.id,
+        },
+      });
+      
+      console.log('TML member code marked as used:', validatedData.tmlMemberCode.trim(), 'by user:', user.id);
+    } catch (error) {
+      console.error('Failed to mark TML code as used:', error);
+      // Don't fail the registration, just log the error
+    }
+  }
+
   // Create payment record if needed
   if (calculatedAmount > 0 && validatedData.isMaritimeLeagueMember === 'NO') {
     await prisma.conferencePayment.create({
@@ -367,7 +462,7 @@ async function createConferenceRegistration(
         paymentDate: isPaidOnline ? new Date() : null,
         paymentConfirmedAt: isPaidOnline ? new Date() : null,
         paymentConfirmedBy: isPaidOnline ? 'paymongo_webhook' : null,
-        notes: isPaidOnline 
+        notes: isPaidOnline
           ? 'Online payment confirmed via PayMongo'
           : validatedData.paymentMode === 'WALK_IN_ON_SITE'
             ? 'Walk-in payment - Awaiting on-site confirmation'

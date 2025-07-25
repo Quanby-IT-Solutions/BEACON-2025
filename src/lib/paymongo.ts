@@ -42,6 +42,7 @@ export async function createCheckoutSession(params: {
   success_url?: string;
   cancel_url?: string;
   metadata?: Record<string, any>;
+  payment_method_types?: string[]; // Allow specific payment methods
   line_items?: Array<{
     currency: string;
     amount: number;
@@ -62,6 +63,7 @@ export async function createCheckoutSession(params: {
     success_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/success`,
     cancel_url = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/registration/conference/payment/cancel`,
     metadata = {},
+    payment_method_types = ['gcash', 'card', 'paymaya'], // Default to all methods
     line_items,
     customer
   } = params;
@@ -82,7 +84,7 @@ export async function createCheckoutSession(params: {
             quantity: 1,
           }
         ],
-        payment_method_types: ['gcash', 'card', 'paymaya'],
+        payment_method_types,
         success_url,
         cancel_url,
         metadata,

@@ -319,7 +319,24 @@ export async function POST(request: NextRequest) {
     // Determine if payment is required (non-maritime league members)
     const requiresPayment = conferenceData.isMaritimeLeagueMember === 'NO' && calculatedAmount > 0;
 
-    // Create PayMongo checkout session if payment is required
+    console.log("DEBUG - /api/conference route:");
+    console.log("isMaritimeLeagueMember:", conferenceData.isMaritimeLeagueMember);
+    console.log("calculatedAmount:", calculatedAmount);
+    console.log("requiresPayment:", requiresPayment);
+    console.log("paymentMode:", conferenceData.paymentMode);
+
+    // FOR NON-TML MEMBERS WHO NEED TO PAY ONLINE: REDIRECT TO PAYMENT-FIRST ROUTE
+    if (requiresPayment && conferenceData.paymentMode !== 'WALK_IN_ON_SITE') {
+      console.log("DEBUG - Redirecting to payment-first route...");
+      
+      return NextResponse.json({
+        success: false,
+        error: 'This route should not be used for online payments. Use /api/conference/payment/initiate instead.',
+        redirect: '/api/conference/payment/initiate'
+      }, { status: 400 });
+    }
+
+    // Create PayMongo checkout session if payment is required (only for walk-in now)
     let paymongoCheckoutSession: any = null;
     let paymentToken: string | null = null;
     let paymentTokenExpiry: Date | null = null;
@@ -482,14 +499,21 @@ export async function POST(request: NextRequest) {
 
     // Mark TML code as used if it was provided and valid
     if (conferenceData.isMaritimeLeagueMember === 'YES' && conferenceData.tmlMemberCode) {
-      await prisma.codeDistribution.update({
-        where: {
-          code: conferenceData.tmlMemberCode.trim(),
-        },
-        data: {
-          userId: user.id,
-        },
-      });
+      try {
+        await prisma.codeDistribution.update({
+          where: {
+            code: conferenceData.tmlMemberCode.trim(),
+          },
+          data: {
+            userId: user.id,
+          },
+        });
+        
+        console.log('TML member code marked as used:', conferenceData.tmlMemberCode.trim(), 'by user:', user.id);
+      } catch (error) {
+        console.error('Failed to mark TML code as used:', error);
+        // Don't fail the registration, just log the error
+      }
     }
 
     // Handle face image upload if provided

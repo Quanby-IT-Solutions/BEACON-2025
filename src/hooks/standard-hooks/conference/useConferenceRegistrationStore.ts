@@ -104,11 +104,11 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
       calculateTotalAmount: () => {
         const { selectedEvents, formData } = get();
         let total = selectedEvents.reduce((sum, event) => sum + event.price, 0);
-        
+
         // Apply conference discount if all 3 conference events are selected
         // Note: This assumes we need to check event types, but we don't have access to event status here
         // The discount will be applied in the EventSelection component and passed via updateSelectedEvents
-        
+
         // Add custom payment amount if provided
         if (formData.customPaymentAmount) {
           const customAmount = parseFloat(formData.customPaymentAmount);
@@ -117,7 +117,7 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
           }
         }
 
-        set({ 
+        set({
           totalAmount: total,
           formData: { ...formData, totalPaymentAmount: total }
         });
@@ -151,6 +151,7 @@ export const useConferenceRegistrationStore = create<ConferenceRegistrationStore
         completedSteps: state.completedSteps,
         selectedEvents: state.selectedEvents,
         totalAmount: state.totalAmount,
+        tmlCodeValidationState: state.tmlCodeValidationState,
       }),
     }
   )
@@ -171,11 +172,11 @@ export const useAutoSaveConferenceRegistration = () => {
 
 // Hook for step navigation helpers
 export const useConferenceFormNavigation = () => {
-  const { 
-    currentStep, 
-    setCurrentStep, 
-    completedSteps, 
-    markStepCompleted 
+  const {
+    currentStep,
+    setCurrentStep,
+    completedSteps,
+    markStepCompleted
   } = useConferenceRegistrationStore();
 
   const steps: ConferenceFormStep[] = [

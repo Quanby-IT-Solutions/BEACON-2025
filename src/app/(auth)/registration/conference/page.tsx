@@ -44,6 +44,7 @@ import ConsentAndConfirmation from "./conference-components/ConsentAndConfirmati
 import { RegistrationProgress } from "./components/RegistrationProgress";
 import { DraftManager } from "./components/DraftManager";
 import { Separator } from "@/components/ui/separator";
+import { Icon } from "@iconify/react";
 
 interface ConferenceRegistrationState {
   isSubmitting: boolean;
@@ -127,7 +128,7 @@ export default function ConferenceRegistrationSinglePage() {
   const paymentMode = form.watch("paymentMode");
   const tmlMemberCode = form.watch("tmlMemberCode");
 
-  // Function to calculate number of vertical lines based on container height
+  // Function to calculate number of vertical lines based on content container height
   const calculateLineCount = useCallback(
     (containerRef: React.RefObject<HTMLDivElement>) => {
       if (!containerRef.current) {
@@ -135,13 +136,26 @@ export default function ConferenceRegistrationSinglePage() {
         return 6; // Default fallback
       }
 
-      const containerHeight = containerRef.current.offsetHeight;
-      const iconHeight = 48; // h-12 w-12 = 48px
-      const spacing = 4; // space-y-1 = 4px
-      const paddingBottom = 4; // pb-1 = 4px
+      // Find the specific content container with the h-fit  classes
+      const contentContainer = containerRef.current.querySelector(
+        ".h-fit"
+      ) as HTMLElement;
+      if (!contentContainer) {
+        console.log("calculateLineCount: No content container found");
+        return 6;
+      }
 
-      // Calculate available height for lines
-      const availableHeight = containerHeight - iconHeight - paddingBottom;
+      const contentHeight = contentContainer.offsetHeight;
+      const titleHeight = 32; // h1 title height approximately
+      const titleGap = 16; // gap-4 = 16px
+      const iconHeight = 48; // lg:h-12 lg:w-12 = 48px on large screens
+      const iconSpacing = 4; // space-y-1 = 4px
+
+      // Calculate total height (content + title + gaps)
+      const totalContentHeight = contentHeight + titleHeight + titleGap;
+
+      // Calculate available height for lines (subtract icon height and spacing)
+      const availableHeight = totalContentHeight - iconHeight - iconSpacing;
 
       // Each line is h-2 (8px) + space-y-1 (4px) = 12px total
       const lineHeight = 8; // h-2 = 8px
@@ -155,7 +169,7 @@ export default function ConferenceRegistrationSinglePage() {
       );
 
       console.log(
-        `calculateLineCount: height=${containerHeight}, available=${availableHeight}, lines=${lineCount}`
+        `calculateLineCount: contentHeight=${contentHeight}, totalHeight=${totalContentHeight}, available=${availableHeight}, lines=${lineCount}`
       );
       return lineCount;
     },
@@ -474,9 +488,9 @@ export default function ConferenceRegistrationSinglePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto py-4 px-4 max-w-5xl flex-1 flex flex-col">
-        <Card className="relative flex-1 flex flex-col h-full p-12">
-          <CardHeader className="shrink-0">
+      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col">
+        <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2">
+          <CardHeader className="shrink-0 p-0">
             <CardTitle className="text-2xl uppercase">
               BEACON EXPO & Conference 2025
             </CardTitle>
@@ -494,13 +508,13 @@ export default function ConferenceRegistrationSinglePage() {
               </div>
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden flex flex-col">
+          <CardContent className="flex-1 overflow-hidden flex flex-col  p-0">
             <div className="mb-4 shrink-0">
               <DraftManager />
             </div>
             <div className="flex-1 overflow-y-auto pb-32">
               <Form {...form}>
-                <div className="relative p-2">
+                <div className="relative lg:p-2">
                   {(state.isSubmitting || isPending) && (
                     <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 flex items-center justify-center">
                       <div className="text-center space-y-2">
@@ -525,10 +539,16 @@ export default function ConferenceRegistrationSinglePage() {
                     <Separator className="max-w-sm mx-auto border-c1 border rounded-full mt-6 mb-12" />
                     <div
                       ref={maritimeContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:ship-wheel"
+                          width="24"
+                          height="24"
+                        />
+
                         {Array.from({ length: maritimeLineCount }).map(
                           (_, i) => (
                             <span
@@ -538,11 +558,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Maritime League Membership
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <MaritimeMembership form={form} />
                         </div>
                       </div>
@@ -550,10 +570,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={eventContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="fa6-solid:users"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: eventLineCount }).map((_, i) => (
                           <span
                             key={i}
@@ -561,11 +586,11 @@ export default function ConferenceRegistrationSinglePage() {
                           ></span>
                         ))}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Event Date Selection
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <EventSelection form={form} />
                         </div>
                       </div>
@@ -573,10 +598,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={personalContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="si:warning-fill"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: personalLineCount }).map(
                           (_, i) => (
                             <span
@@ -586,11 +616,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Personal Information
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <PersonalInformation form={form} />
                         </div>
                       </div>
@@ -598,10 +628,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={contactContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:telephone"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: contactLineCount }).map(
                           (_, i) => (
                             <span
@@ -611,11 +646,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Contact Information
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <ContactDetails form={form} />
                         </div>
                       </div>
@@ -623,10 +658,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={professionalContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="mdi:tie"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: professionalLineCount }).map(
                           (_, i) => (
                             <span
@@ -636,11 +676,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Professional Information
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <ProfessionalInformation form={form} />
                         </div>
                       </div>
@@ -648,10 +688,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={interestsContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="bx:run"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: interestsLineCount }).map(
                           (_, i) => (
                             <span
@@ -661,11 +706,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Areas of Interests & Preferences
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <InterestsAndPreferences form={form} />
                         </div>
                       </div>
@@ -673,10 +718,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={paymentContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="ion:wallet-outline"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: paymentLineCount }).map(
                           (_, i) => (
                             <span
@@ -686,11 +736,11 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Payment Details
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <PaymentDetails form={form} />
                         </div>
                       </div>
@@ -698,10 +748,15 @@ export default function ConferenceRegistrationSinglePage() {
 
                     <div
                       ref={consentContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="qlementine-icons:certified-filled-16"
+                          width="24"
+                          height="24"
+                        />
                         {Array.from({ length: consentLineCount }).map(
                           (_, i) => (
                             <span
@@ -711,21 +766,26 @@ export default function ConferenceRegistrationSinglePage() {
                           )
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col gap-4  mt-3">
+                      <div className="flex-1 flex flex-col lg:mt-3">
                         <h1 className="text-lg font-semibold">
                           Consent & Confirmation
                         </h1>
-                        <div className="ml-4 py-4">
+                        <div className="lg:ml-4 py-4 h-fit ">
                           <ConsentAndConfirmation form={form} />
                         </div>
                       </div>
                     </div>
                     <div
                       ref={submitContainerRef}
-                      className="min-h-24 flex flex-row"
+                      className="min-h-24 flex flex-row lg:gap-4"
                     >
-                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
-                        <ShipWheel className="rounded-full bg-c1/30 border-2 border-c1 p-1 h-12 w-12" />
+                      <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
+                        <Icon
+                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          icon="line-md:downloading-loop"
+                          width="24"
+                          height="24"
+                        />
                       </div>
                     </div>
 

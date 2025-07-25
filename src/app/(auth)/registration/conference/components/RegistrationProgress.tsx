@@ -20,6 +20,9 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
   const formErrors = form.formState.errors;
   const totalErrors = Object.keys(formErrors).length;
 
+  // Use totalAmount from store (already includes custom payment amount)
+  const finalTotalAmount = totalAmount;
+
   // Calculate completion based on required fields
   const calculateProgress = () => {
     let completed = 0;
@@ -132,13 +135,13 @@ export function RegistrationProgress({ form }: RegistrationProgressProps) {
             </div>
 
             {/* Payment Info */}
-            {requiresPayment && totalAmount > 0 && (
+            {requiresPayment && finalTotalAmount > 0 && (
               <div className="text-right text-sm">
                 <div className="font-medium text-orange-600">
                   Payment Required
                 </div>
                 <div className="text-orange-700">
-                  ₱{totalAmount.toLocaleString()}
+                  ₱{finalTotalAmount.toLocaleString()}
                 </div>
               </div>
             )}

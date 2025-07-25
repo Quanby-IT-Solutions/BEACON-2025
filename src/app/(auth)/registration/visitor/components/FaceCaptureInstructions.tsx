@@ -33,51 +33,37 @@ interface FaceCaptureInstructionsProps {
 const instructions = [
   {
     step: 1,
-    title: "Prepare Your Environment",
+    title: "Set Up",
     icon: Lightbulb,
     content: [
-      "Find a well-lit area with natural light if possible",
-      "Ensure your camera is clean and unobstructed",
-      "Position yourself in front of the camera",
-      "Remove sunglasses and hats for clear visibility",
+      "Find good lighting",
+      "Clean your camera",
+      "Remove glasses/hats",
     ],
-    tip: "Good lighting is essential for face detection to work properly.",
+    tip: "Good lighting = better results",
   },
   {
     step: 2,
-    title: "Camera Positioning",
+    title: "Position Camera",
     icon: Eye,
     content: [
-      "Hold your device steady at eye level",
-      "Keep the camera about arm's length away",
-      "Look directly into the camera lens",
-      "Keep your face upright and centered",
+      "Hold device at eye level",
+      "Arm's length away",
+      "Look at camera",
     ],
-    tip: "The closer your face to the center, the better the detection.",
+    tip: "Keep face centered",
   },
   {
     step: 3,
-    title: "Face Positioning Guide",
-    icon: UserCheck,
-    content: [
-      "Position your face within the oval guide that will appear",
-      "Make sure your entire face is visible",
-      "Keep your expression neutral with eyes open",
-      "Wait for the green border indicating proper positioning",
-    ],
-    tip: "The system will automatically detect when your face is properly positioned.",
-  },
-  {
-    step: 4,
-    title: "Capture Your Photo",
+    title: "Take Photo",
     icon: Camera,
     content: [
-      "When you see 'Ready to Capture!' message, click the capture button",
-      "Stay still during the capture process",
-      "Review your photo and retake if needed",
-      "Ensure the photo clearly shows your face",
+      "Position face in oval guide",
+      "Wait for green border",
+      "Click capture button",
+      "Retake if needed",
     ],
-    tip: "You can retake the photo as many times as needed until you're satisfied.",
+    tip: "System detects when ready",
   },
 ];
 
@@ -119,7 +105,7 @@ export function FaceCaptureInstructions({
             {!isMobile && <Monitor className="w-5 h-5" />}
           </DialogTitle>
           <DialogDescription className="text-center">
-            Follow these steps to capture a perfect profile photo
+            Quick steps for a perfect photo
           </DialogDescription>
         </DialogHeader>
 
@@ -188,22 +174,12 @@ export function FaceCaptureInstructions({
 
             {/* Visual Guide for Step 3 */}
             {currentStep === 2 && (
-              <div className="bg-gray-50 rounded-lg p-4 max-w-md mx-auto">
-                <p className="text-sm font-semibold mb-3">Visual Guide:</p>
-                <div className="relative w-fit h-fit mx-auto bg-gray-200 rounded-lg overflow-hidden">
-                  <img
-                    src="/images/face-recognition.jpg"
-                    className="object-contain"
-                    alt=""
-                  />
-                  {/* Status indicator */}
-                  <Badge className="absolute top-1 left-1 text-xs bg-green-500 text-white">
-                    <CheckCircle className="w-2 h-2 mr-1" />
-                    Perfect!
-                  </Badge>
+              <div className="bg-gray-50 rounded-lg p-3 max-w-sm mx-auto">
+                <div className="w-20 h-20 mx-auto bg-gray-200 rounded-full border-4 border-dashed border-gray-400 flex items-center justify-center">
+                  <UserCheck className="w-8 h-8 text-gray-600" />
                 </div>
-                <p className="text-xs text-gray-600 mt-2">
-                  Position your face like this within the oval guide
+                <p className="text-xs text-gray-600 mt-2 text-center">
+                  Position face in oval guide
                 </p>
               </div>
             )}
@@ -249,7 +225,7 @@ export function FaceCaptureInstructions({
               onClick={onProceed}
               className="text-gray-500 hover:text-gray-700"
             >
-              Skip instructions and start camera
+              Skip & start camera
             </Button>
           </div>
         </div>

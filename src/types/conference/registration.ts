@@ -43,6 +43,7 @@ export const baseConferenceSchema = z.object({
   totalPaymentAmount: z.number().optional().nullable(),
   customPaymentAmount: z.string().optional().nullable(),
   paymentMode: z.enum(['BANK_DEPOSIT_TRANSFER', 'GCASH', 'WALK_IN_ON_SITE']).optional().nullable(),
+  hasConferenceDiscount: z.boolean().optional().nullable(),
 
   // Section 7: Consent & Confirmation
   emailCertificate: z.boolean().default(false),

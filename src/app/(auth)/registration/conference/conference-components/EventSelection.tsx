@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { UseFormReturn } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -11,28 +10,15 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Loader2,
-  Calendar,
-  MapPin,
-  DollarSign,
-  Clock,
-  Users,
-  Info,
-} from "lucide-react";
+import { Loader2, Calendar, Info } from "lucide-react";
 import { EventSelectionProps } from "@/types/conference/components";
-import {
-  useActiveEventsQuery,
-  useEventSelection,
-} from "@/hooks/tanstasck-query/useEventsQuery";
+import { useEventSelection } from "@/hooks/tanstasck-query/useEventsQuery";
 import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
 
 export default function EventSelection({ form }: EventSelectionProps) {
-  const { updateSelectedEvents, selectedEvents, totalAmount, requiresPayment } =
-    useConferenceRegistrationStore();
+  const { updateSelectedEvents } = useConferenceRegistrationStore();
 
   const {
     events = [],
@@ -71,6 +57,21 @@ export default function EventSelection({ form }: EventSelectionProps) {
           events
         );
         form.setValue("totalPaymentAmount", total);
+
+        // Check if conference discount is applied
+        const conferenceEvents = events.filter(
+          (event) => event.eventStatus === "CONFERENCE"
+        );
+        const selectedConferenceEvents = selected.filter(
+          (event) =>
+            events.find((e) => e.id === event.id)?.eventStatus === "CONFERENCE"
+        );
+        const hasDiscount =
+          conferenceEvents.length === 3 &&
+          selectedConferenceEvents.length === 3;
+
+        // Set hasConferenceDiscount field for backend
+        form.setValue("hasConferenceDiscount", hasDiscount);
 
         // Update the store's totalAmount directly with the discounted amount
         useConferenceRegistrationStore.setState({ totalAmount: total });
@@ -176,81 +177,78 @@ export default function EventSelection({ form }: EventSelectionProps) {
         name="selectedEventIds"
         render={() => (
           <FormItem>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between py-4">
               <FormLabel className="text-base font-medium">
                 1. Select Events to Attend *
               </FormLabel>
               <FormMessage />
             </div>
-            <FormDescription className="font-normal text-accent-foreground">
+            <FormDescription className="font-normal text-accent-foreground pb-4">
               Select one or more events you'd like to attend. Get a discount of
               ₱1,500 if you select all 3 conference events.
             </FormDescription>
             <FormControl>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-6 overflow-hidden">
                 {events
                   .sort((a, b) => a.eventName.localeCompare(b.eventName))
                   .map((event) => (
-                    <Card
-                      key={event.id}
-                      className="relative hover:shadow-md transition-shadow"
-                    >
-                      <CardHeader className="px-4">
-                        <FormField
-                          control={form.control}
-                          name="selectedEventIds"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(event.id)}
-                                    onCheckedChange={(checked) => {
-                                      const currentValues = field.value || [];
-                                      if (checked) {
-                                        field.onChange([
-                                          ...currentValues,
-                                          event.id,
-                                        ]);
-                                      } else {
-                                        field.onChange(
-                                          currentValues.filter(
-                                            (value) => value !== event.id
-                                          )
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-accent-foreground items-center">
-                                  {event.eventName}
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      className={getEventStatusColor(
-                                        event.eventStatus
-                                      )}
-                                      variant="secondary"
-                                    >
-                                      {event.eventStatus}
-                                    </Badge>
-                                    <Badge
-                                      variant="outline"
-                                      className="font-semibold"
-                                    >
-                                      {formatPrice(Number(event.eventPrice))}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Calendar className="h-4 w-4 mr-2" />
-                                    {formatDate(new Date(event.eventDate))}
-                                  </div>
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      </CardHeader>
-                    </Card>
+                    <FormField
+                      key={`event-${event.id}`}
+                      control={form.control}
+                      name="selectedEventIds"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={`item-${event.id}`}
+                            className="flex flex-row items-start lg:items-center space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(event.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  if (checked) {
+                                    field.onChange([
+                                      ...currentValues,
+                                      event.id,
+                                    ]);
+                                  } else {
+                                    field.onChange(
+                                      currentValues.filter(
+                                        (value) => value !== event.id
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-accent-foreground lg:items-center items-start flex lg:flex-row flex-col">
+                              {event.eventName}
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  className={getEventStatusColor(
+                                    event.eventStatus
+                                  )}
+                                  variant="secondary"
+                                >
+                                  {event.eventStatus}
+                                </Badge>
+                                <Badge
+                                  variant="outline"
+                                  className="font-semibold"
+                                >
+                                  {formatPrice(Number(event.eventPrice))}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                {formatDate(new Date(event.eventDate))}
+                              </div>
+                            </FormLabel>
+                          </FormItem>
+                        );
+                      }}
+                    />
                   ))}
               </div>
             </FormControl>

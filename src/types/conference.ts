@@ -35,6 +35,8 @@ export interface Event {
   eventStatus: EventStatusEnum;
   isActive: boolean;
   description?: string;
+  eventStartTime?: Date;
+  eventEndTime?: Date;
   summaryOfPayments?: SummaryOfPayments[];
 }
 

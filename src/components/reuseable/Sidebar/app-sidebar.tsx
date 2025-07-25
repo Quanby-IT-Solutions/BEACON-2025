@@ -1,23 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  AudioWaveform,
-  BookOpen,
-  BookTemplate,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  ShowerHeadIcon,
-  SquareTerminal,
-  User,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { Book, BookOpen, Frame, GalleryVerticalEnd } from "lucide-react";
 
 import {
   Sidebar,
@@ -72,7 +56,18 @@ const data = {
     },
   ],
 
-  projects: [],
+  projects: [
+    {
+      name: "Code Distribution",
+      url: "/admin/codes",
+      icon: Book,
+    },
+    {
+      name: "Events",
+      url: "/admin/events",
+      icon: BookOpen,
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

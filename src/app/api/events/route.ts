@@ -8,10 +8,12 @@ const prisma = new PrismaClient();
 const eventSchema = z.object({
   eventName: z.string().min(1, 'Event name is required'),
   eventDate: z.string().pipe(z.coerce.date()),
+  eventStartTime: z.string().optional().nullable(),
+  eventEndTime: z.string().optional().nullable(),
   eventPrice: z.number().min(0, 'Event price must be non-negative'),
   eventStatus: z.enum(['CONFERENCE', 'SHOW', 'WORKSHOP', 'SEMINAR', 'EXHIBITION']),
   isActive: z.boolean().default(true),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
 });
 
 // POST - Create new event
@@ -24,6 +26,8 @@ export async function POST(request: NextRequest) {
       data: {
         eventName: validatedData.eventName,
         eventDate: validatedData.eventDate,
+        eventStartTime: validatedData.eventStartTime ? new Date(validatedData.eventStartTime) : null,
+        eventEndTime: validatedData.eventEndTime ? new Date(validatedData.eventEndTime) : null,
         eventPrice: validatedData.eventPrice,
         eventStatus: validatedData.eventStatus,
         isActive: validatedData.isActive,

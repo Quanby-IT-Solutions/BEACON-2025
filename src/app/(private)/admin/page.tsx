@@ -29,23 +29,7 @@ export default function AdminDashboard() {
   const { data: visitorsData, isLoading, error, refetch } = useAdminVisitors();
   const deleteVisitor = useDeleteVisitor();
 
-  useEffect(() => {
-    // Check authentication state
-    const checkAuth = () => {
-      if (!isAuthenticated) {
-        router.push("/login");
-        return;
-      }
-
-      // Only check session validity if we have session data
-      if (isAuthenticated && !isSessionValid()) {
-        router.push("/login");
-        return;
-      }
-    };
-
-    checkAuth();
-  }, [isAuthenticated, router]);
+  // Authentication is handled by the (private) layout, no need for checks here
 
   return (
     <div className="flex flex-1 flex-col min-h-screen gap-4 p-4">

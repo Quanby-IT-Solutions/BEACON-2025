@@ -377,6 +377,25 @@ async function createConferenceRegistrationFromPayment(
       }
     });
 
+    // Mark TML code as used if it was provided and valid
+    if (formData.isMaritimeLeagueMember === 'YES' && formData.tmlMemberCode) {
+      try {
+        await prisma.codeDistribution.update({
+          where: {
+            code: formData.tmlMemberCode.trim(),
+          },
+          data: {
+            userId: user.id,
+          },
+        });
+        
+        console.log('TML member code marked as used:', formData.tmlMemberCode.trim(), 'by user:', user.id);
+      } catch (error) {
+        console.error('Failed to mark TML code as used:', error);
+        // Don't fail the registration, just log the error
+      }
+    }
+
     console.log('Conference registration and payment created successfully:', conference.id);
 
   } catch (error) {

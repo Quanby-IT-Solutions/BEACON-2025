@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -17,19 +17,23 @@ import { Loader2, Shield } from "lucide-react";
 import { useAdminLogin } from "@/hooks/tanstasck-query/useAdminAuth";
 import { useAdminStore } from "@/stores/adminStore";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated } = useAdminStore();
   const adminLogin = useAdminLogin();
+  
+  // Get return URL from query params, default to /admin
+  const returnUrl = searchParams.get('returnUrl') ? decodeURIComponent(searchParams.get('returnUrl')!) : '/admin';
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/admin");
+      router.push(returnUrl);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, returnUrl]);
 
   // Don't render the form if already authenticated
   if (isAuthenticated) {
@@ -47,7 +51,7 @@ export default function AdminLoginPage() {
       { username: username.trim(), password },
       {
         onSuccess: () => {
-          router.push("/admin");
+          router.push(returnUrl);
         },
       }
     );
@@ -123,5 +127,20 @@ export default function AdminLoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
   );
 }

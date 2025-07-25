@@ -20,7 +20,9 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       // Give a small delay to allow Zustand to rehydrate from localStorage
       setTimeout(() => {
         if (!isAuthenticated || !isSessionValid()) {
-          router.push("/login");
+          // Store current URL before redirecting to login
+          const returnUrl = encodeURIComponent(window.location.pathname);
+          router.push(`/login?returnUrl=${returnUrl}`);
         } else {
           setIsLoading(false);
         }

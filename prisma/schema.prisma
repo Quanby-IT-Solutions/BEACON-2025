@@ -108,7 +108,6 @@ enum HearAboutEvent {
 enum MaritimeLeagueMembership {
   YES
   NO
-  APPLY_FOR_MEMBERSHIP
 }
 
 enum PaymentMode {
@@ -349,6 +348,8 @@ model Events {
   eventStatus EventStatusEnum
   isActive    Boolean         @default(true)
   description String?
+  eventStartTime DateTime?
+  eventEndTime DateTime?
 
   // Relations
   summaryOfPayments SummaryOfPayments[]

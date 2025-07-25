@@ -1,47 +1,58 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Building, 
-  Calendar, 
-  DollarSign, 
-  Shield, 
-  Camera, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building,
+  Calendar,
+  DollarSign,
+  Shield,
   FileText,
   CheckCircle,
   AlertTriangle,
-  Star
+  Star,
 } from "lucide-react";
-import { conferenceInterestAreasOptions, ageBracketOptions, genderOptions } from "@/types/conference/registration";
+import {
+  conferenceInterestAreasOptions,
+  ageBracketOptions,
+  genderOptions,
+} from "@/types/conference/registration";
 import { useConferenceRegistrationStore } from "@/hooks/standard-hooks/conference/useConferenceRegistrationStore";
 import { RegistrationSummaryProps } from "@/types/conference/components";
 
-export default function RegistrationSummary({ form }: RegistrationSummaryProps) {
-  const { selectedEvents, totalAmount, requiresPayment } = useConferenceRegistrationStore();
+export default function RegistrationSummary({
+  form,
+}: RegistrationSummaryProps) {
+  const { selectedEvents, totalAmount, requiresPayment } =
+    useConferenceRegistrationStore();
   const formData = form.getValues();
 
   const formatPrice = (price: number) => {
-    return price === 0 ? 'FREE' : `₱${price.toLocaleString()}`;
+    return price === 0 ? "FREE" : `₱${price.toLocaleString()}`;
   };
 
   const getGenderLabel = (value: string) => {
-    return genderOptions.find(option => option.value === value)?.label || value;
+    return (
+      genderOptions.find((option) => option.value === value)?.label || value
+    );
   };
 
   const getAgeBracketLabel = (value: string) => {
-    return ageBracketOptions.find(option => option.value === value)?.label || value;
+    return (
+      ageBracketOptions.find((option) => option.value === value)?.label || value
+    );
   };
 
   const getInterestAreaLabel = (value: string) => {
-    return conferenceInterestAreasOptions.find(option => option.value === value)?.label || value;
+    return (
+      conferenceInterestAreasOptions.find((option) => option.value === value)
+        ?.label || value
+    );
   };
 
   return (
@@ -69,16 +80,25 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Status:</span>
-                <Badge variant={formData.isMaritimeLeagueMember === 'YES' ? 'default' : 'secondary'}>
-                  {formData.isMaritimeLeagueMember === 'YES' && 'TML Member'}
-                  {formData.isMaritimeLeagueMember === 'NO' && 'Non-Member'}
-                  {formData.isMaritimeLeagueMember === 'APPLY_FOR_MEMBERSHIP' && 'Applying for Membership'}
+                <Badge
+                  variant={
+                    formData.isMaritimeLeagueMember === "YES"
+                      ? "default"
+                      : "secondary"
+                  }
+                >
+                  {formData.isMaritimeLeagueMember === "YES" && "TML Member"}
+                  {formData.isMaritimeLeagueMember === "NO" && "Non-Member"}
                 </Badge>
               </div>
               {formData.tmlMemberCode && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Member Code:</span>
-                  <span className="font-mono text-sm">{formData.tmlMemberCode}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Member Code:
+                  </span>
+                  <span className="font-mono text-sm">
+                    {formData.tmlMemberCode}
+                  </span>
                 </div>
               )}
             </div>
@@ -97,7 +117,10 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
             {selectedEvents.length > 0 ? (
               <div className="space-y-3">
                 {selectedEvents.map((event) => (
-                  <div key={event.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between py-2 border-b last:border-b-0"
+                  >
                     <span className="font-medium">{event.name}</span>
                     <Badge variant="outline">{formatPrice(event.price)}</Badge>
                   </div>
@@ -106,13 +129,17 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
                   <div className="flex items-center justify-between font-semibold">
                     <span>Total Amount:</span>
                     <span className="text-lg">
-                      {requiresPayment ? formatPrice(totalAmount) : 'FREE (TML Member)'}
+                      {requiresPayment
+                        ? formatPrice(totalAmount)
+                        : "FREE (TML Member)"}
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No events selected</p>
+              <p className="text-sm text-muted-foreground">
+                No events selected
+              </p>
             )}
           </CardContent>
         </Card>
@@ -131,28 +158,45 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
                 <div>
                   <span className="text-sm text-muted-foreground">Name:</span>
                   <p className="font-medium">
-                    {[formData.firstName, formData.middleName, formData.lastName, formData.suffix]
+                    {[
+                      formData.firstName,
+                      formData.middleName,
+                      formData.lastName,
+                      formData.suffix,
+                    ]
                       .filter(Boolean)
-                      .join(' ') || 'Not provided'}
+                      .join(" ") || "Not provided"}
                   </p>
                 </div>
                 {formData.preferredName && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Preferred Name:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Preferred Name:
+                    </span>
                     <p className="font-medium">{formData.preferredName}</p>
                   </div>
                 )}
                 <div>
                   <span className="text-sm text-muted-foreground">Gender:</span>
-                  <p className="font-medium">{getGenderLabel(formData.gender)}</p>
+                  <p className="font-medium">
+                    {getGenderLabel(formData.gender)}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Age Bracket:</span>
-                  <p className="font-medium">{getAgeBracketLabel(formData.ageBracket)}</p>
+                  <span className="text-sm text-muted-foreground">
+                    Age Bracket:
+                  </span>
+                  <p className="font-medium">
+                    {getAgeBracketLabel(formData.ageBracket)}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Nationality:</span>
-                  <p className="font-medium">{formData.nationality || 'Not provided'}</p>
+                  <span className="text-sm text-muted-foreground">
+                    Nationality:
+                  </span>
+                  <p className="font-medium">
+                    {formData.nationality || "Not provided"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -171,11 +215,11 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{formData.email || 'Not provided'}</span>
+                <span>{formData.email || "Not provided"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{formData.mobileNumber || 'Not provided'}</span>
+                <span>{formData.mobileNumber || "Not provided"}</span>
               </div>
               {formData.mailingAddress && (
                 <div className="flex items-start gap-2">
@@ -200,19 +244,25 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
               <div className="space-y-2">
                 {formData.jobTitle && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Position:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Position:
+                    </span>
                     <p className="font-medium">{formData.jobTitle}</p>
                   </div>
                 )}
                 {formData.companyName && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Company:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Company:
+                    </span>
                     <p className="font-medium">{formData.companyName}</p>
                   </div>
                 )}
                 {formData.industry && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Industry:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Industry:
+                    </span>
                     <p className="font-medium">{formData.industry}</p>
                   </div>
                 )}
@@ -240,7 +290,9 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
               </div>
               {formData.otherInterests && (
                 <div className="mt-3 pt-3 border-t">
-                  <span className="text-sm text-muted-foreground">Additional Comments:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Additional Comments:
+                  </span>
                   <p className="text-sm mt-1">{formData.otherInterests}</p>
                 </div>
               )}
@@ -260,26 +312,38 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Data Privacy Consent:</span>
-                <Badge variant={formData.dataUsageConsent ? 'default' : 'destructive'}>
-                  {formData.dataUsageConsent ? 'Granted' : 'Required'}
+                <Badge
+                  variant={
+                    formData.dataUsageConsent ? "default" : "destructive"
+                  }
+                >
+                  {formData.dataUsageConsent ? "Granted" : "Required"}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Photo/Video Consent:</span>
-                <Badge variant={formData.photoVideoConsent ? 'default' : 'secondary'}>
-                  {formData.photoVideoConsent ? 'Granted' : 'Not Granted'}
+                <Badge
+                  variant={formData.photoVideoConsent ? "default" : "secondary"}
+                >
+                  {formData.photoVideoConsent ? "Granted" : "Not Granted"}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Digital Certificate:</span>
-                <Badge variant={formData.emailCertificate ? 'default' : 'secondary'}>
-                  {formData.emailCertificate ? 'Requested' : 'Not Requested'}
+                <Badge
+                  variant={formData.emailCertificate ? "default" : "secondary"}
+                >
+                  {formData.emailCertificate ? "Requested" : "Not Requested"}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Future Event Invites:</span>
-                <Badge variant={formData.receiveEventInvites ? 'default' : 'secondary'}>
-                  {formData.receiveEventInvites ? 'Yes' : 'No'}
+                <Badge
+                  variant={
+                    formData.receiveEventInvites ? "default" : "secondary"
+                  }
+                >
+                  {formData.receiveEventInvites ? "Yes" : "No"}
                 </Badge>
               </div>
             </div>
@@ -298,13 +362,18 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-yellow-900">Total Amount Due:</span>
-                  <span className="text-xl font-bold text-yellow-900">{formatPrice(totalAmount)}</span>
+                  <span className="font-medium text-yellow-900">
+                    Total Amount Due:
+                  </span>
+                  <span className="text-xl font-bold text-yellow-900">
+                    {formatPrice(totalAmount)}
+                  </span>
                 </div>
                 <Alert className="border-yellow-300 bg-yellow-100">
                   <AlertTriangle className="h-4 w-4 text-yellow-600" />
                   <AlertDescription className="text-yellow-800">
-                    Payment will be processed via PayMongo after registration submission. You will be redirected to a secure payment page.
+                    Payment will be processed via PayMongo after registration
+                    submission. You will be redirected to a secure payment page.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -335,7 +404,9 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
                   <div className="pt-2 border-t border-green-200">
                     <div className="flex items-center justify-between font-semibold">
                       <span>Total Savings:</span>
-                      <span className="text-lg">{formatPrice(totalAmount)}</span>
+                      <span className="text-lg">
+                        {formatPrice(totalAmount)}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -348,7 +419,9 @@ export default function RegistrationSummary({ form }: RegistrationSummaryProps) 
         <Alert className="border-blue-200 bg-blue-50">
           <CheckCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>Ready to submit!</strong> Please review all information above. Once submitted, you will receive a confirmation email with your registration details and next steps.
+            <strong>Ready to submit!</strong> Please review all information
+            above. Once submitted, you will receive a confirmation email with
+            your registration details and next steps.
           </AlertDescription>
         </Alert>
       </div>

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'Inactive code',
-        message: 'This TML member code is no longer active.'
+        message: 'This TML member code is not active anymore and cannot be used for registration.'
       }, { status: 400 });
     }
 
@@ -133,7 +133,8 @@ export async function PUT(request: NextRequest) {
     if (!codeDistribution.isActive) {
       return NextResponse.json({
         success: false,
-        error: 'Inactive code'
+        error: 'Inactive code',
+        message: 'This TML member code is not active anymore and cannot be used for registration.'
       }, { status: 400 });
     }
 

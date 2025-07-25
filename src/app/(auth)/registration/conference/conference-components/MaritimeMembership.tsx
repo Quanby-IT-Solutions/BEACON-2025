@@ -12,18 +12,7 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Shield,
-  Star,
-  Gift,
-  Users,
-} from "lucide-react";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { maritimeLeagueMembershipOptions } from "@/types/conference/registration";
 import { MaritimeMembershipProps } from "@/types/conference/components";
 import {
@@ -81,6 +70,13 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
     setTmlCodeValidationState,
   ]);
 
+  // Clear form validation errors when custom validation succeeds
+  useEffect(() => {
+    if (isValid && form.formState.errors.tmlMemberCode) {
+      form.clearErrors("tmlMemberCode");
+    }
+  }, [isValid, form]);
+
   // Handle membership selection
   const handleMembershipChange = (value: string) => {
     form.setValue("isMaritimeLeagueMember", value as any);
@@ -98,6 +94,11 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
   const handleCodeChange = (value: string) => {
     setCode(value);
     form.setValue("tmlMemberCode", value);
+
+    // Clear form field error when user starts typing
+    if (form.formState.errors.tmlMemberCode) {
+      form.clearErrors("tmlMemberCode");
+    }
   };
 
   return (
@@ -153,11 +154,14 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
                   {showLoading && (
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                   )}
-                  {showSuccess && (
+                  {showSuccess && !form.formState.errors.tmlMemberCode && (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   )}
-                  {showError && <XCircle className="h-4 w-4 text-red-600" />}
+                  {(showError || form.formState.errors.tmlMemberCode) && (
+                    <XCircle className="h-4 w-4 text-red-600" />
+                  )}
                 </FormLabel>
+                <FormMessage />
               </div>
               <FormControl>
                 <Input
@@ -166,10 +170,12 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
                   onChange={(e) => handleCodeChange(e.target.value)}
                   placeholder="Enter your TML member code"
                   className={`transition-colors ${
-                    showSuccess
+                    showSuccess && !form.formState.errors.tmlMemberCode
                       ? "border-green-500 bg-green-50"
-                      : showError
+                      : showError || form.formState.errors.tmlMemberCode
                       ? "border-red-500 bg-red-50"
+                      : isEmpty
+                      ? "border-gray-300"
                       : "border-blue-300"
                   }`}
                 />
@@ -178,6 +184,18 @@ export default function MaritimeMembership({ form }: MaritimeMembershipProps) {
                 Enter your unique TML member code to verify your membership and
                 access exclusive benefits.
               </FormDescription>
+              {showError && errorMessage && (
+                <div className="text-sm text-red-600 mt-2 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+              {showSuccess && validationResult?.message && (
+                <div className="text-sm text-green-600 mt-2 flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{validationResult.message}</span>
+                </div>
+              )}
             </FormItem>
           )}
         />
