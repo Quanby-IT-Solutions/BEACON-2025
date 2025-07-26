@@ -67,8 +67,6 @@ enum Industry {
   OTHERS
 }
 
-
-
 enum AttendeeType {
   TRADE_VISITOR
   GOVERNMENT_OFFICIAL
@@ -344,6 +342,22 @@ model Events {
   summaryOfPayments SummaryOfPayments[]
 
   @@map("events")
+}
+
+model VisitorEvents {
+  id             String          @id @default(uuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  eventName      String
+  eventDateStart DateTime
+  eventDateEnd   DateTime
+  eventStartTime DateTime?
+  eventEndTime   DateTime?
+  eventStatus    EventStatusEnum
+  isActive       Boolean         @default(true)
+  description    String?
+
+  @@map("visitor_events")
 }
 
 model CodeDistribution {

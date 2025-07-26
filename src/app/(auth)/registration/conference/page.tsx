@@ -45,6 +45,8 @@ import { RegistrationProgress } from "./components/RegistrationProgress";
 import { DraftManager } from "./components/DraftManager";
 import { Separator } from "@/components/ui/separator";
 import { Icon } from "@iconify/react";
+import { ModeToggle } from "@/components/reuseable/page-components/ModeToggle";
+import Link from "next/link";
 
 interface ConferenceRegistrationState {
   isSubmitting: boolean;
@@ -465,17 +467,27 @@ export default function ConferenceRegistrationSinglePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col gap-6">
-        <img src="/images/beacon-reg.png" className="rounded-lg" alt="" />
-        <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2">
+    <div className="min-h-screen flex flex-col bg-blue-300/20 dark:bg-c1">
+      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col gap-6 z-10">
+        <div className="relative w-fit h-fit rounded-lg overflow-hidden group">
+          <div className="z-10 group-hover:bg-black/30 duration-300 w-full h-full absolute"></div>
+          <img
+            src="/images/beacon-reg.png"
+            className=" object-contain"
+            alt=""
+          />
+          <div className="w-fit h-fit absolute bottom-4 right-4 z-20">
+            <ModeToggle />
+          </div>
+        </div>
+        <Card className="relative dark:bg-white/20 flex-1 flex flex-col h-full lg:p-12 p-2">
           <CardHeader className="shrink-0 p-0">
             <CardTitle className="text-2xl uppercase">
               BEACON EXPO & Conference 2025
             </CardTitle>
             <Separator className="w-24 max-w-24 border-c1 border-2 rounded-full" />
             <CardDescription className="">
-              <div className="text-accent-foreground dark:text-accent">
+              <div className="text-accent-foreground">
                 <p className="font-semibold">
                   Official Registration Form – Conference | Philippine Ships &
                   Boats In-Water Show | Blue Runway Fashion Show
@@ -520,7 +532,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:ship-wheel"
                           width="24"
                           height="24"
@@ -551,7 +563,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="fa6-solid:users"
                           width="24"
                           height="24"
@@ -579,7 +591,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="si:warning-fill"
                           width="24"
                           height="24"
@@ -609,7 +621,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:telephone"
                           width="24"
                           height="24"
@@ -639,7 +651,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:tie"
                           width="24"
                           height="24"
@@ -669,7 +681,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="bx:run"
                           width="24"
                           height="24"
@@ -699,7 +711,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="ion:wallet-outline"
                           width="24"
                           height="24"
@@ -729,7 +741,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="qlementine-icons:certified-filled-16"
                           width="24"
                           height="24"
@@ -758,7 +770,7 @@ export default function ConferenceRegistrationSinglePage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 lg:h-12 lg:w-12 h-6 w-6"
                           icon="line-md:downloading-loop"
                           width="24"
                           height="24"
@@ -803,7 +815,7 @@ export default function ConferenceRegistrationSinglePage() {
           </CardContent>
         </Card>
       </div>
-      <RegistrationProgress form={form} />
+      {/* <RegistrationProgress form={form} /> */}
 
       {/* Success Dialog - Only for TML members (no payment required) */}
       <AlertDialog
@@ -834,38 +846,18 @@ export default function ConferenceRegistrationSinglePage() {
                 ? "Your payment receipt has been uploaded and is under review. You will receive a confirmation email once your payment is verified."
                 : "As a TML member, your registration is complete with no payment required. You will receive a confirmation email shortly."}
             </div>
-            {state.registrationData && (
-              <div className="bg-gray-50 rounded-lg p-3 text-xs text-left">
-                <div>
-                  <span className="font-medium">Conference ID:</span>{" "}
-                  {state.registrationData.conferenceId.slice(0, 8)}...
-                </div>
-                <div>
-                  <span className="font-medium">User ID:</span>{" "}
-                  {state.registrationData.userId.slice(0, 8)}...
-                </div>
-              </div>
-            )}
+
             <div className="text-xs text-muted-foreground">
               Save this information for your records.
             </div>
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => {
-                setState({
-                  isSubmitting: false,
-                  showSuccessDialog: false,
-                  registrationData: null,
-                });
-                // Optionally redirect to a thank you page or home
-                window.location.href = "/https://www.thebeaconexpo.com/";
-              }}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              Continue to Homepage
-            </AlertDialogAction>
+            <Link href={"/https://www.thebeaconexpo.com/"}>
+              <AlertDialogAction className="w-full bg-green-600 hover:bg-green-700 dark:text-accent-foreground">
+                Continue to Homepage
+              </AlertDialogAction>
+            </Link>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

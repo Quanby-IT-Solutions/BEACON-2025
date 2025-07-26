@@ -35,11 +35,7 @@ const instructions = [
     step: 1,
     title: "Set Up",
     icon: Lightbulb,
-    content: [
-      "Find good lighting",
-      "Clean your camera",
-      "Remove glasses/hats",
-    ],
+    content: ["Find good lighting", "Clean your camera", "Remove glasses/hats"],
     tip: "Good lighting = better results",
   },
   {
@@ -120,7 +116,7 @@ export function FaceCaptureInstructions({
                       ? "bg-primary text-primary-foreground border-primary"
                       : index < currentStep
                       ? "bg-green-500 text-white border-green-500"
-                      : "bg-gray-200 text-gray-500 border-gray-300"
+                      : "bg-gray-200  border-gray-300"
                   }`}
                 >
                   {index < currentStep ? (
@@ -156,7 +152,7 @@ export function FaceCaptureInstructions({
               {currentInstruction.content.map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0" />
-                  <p className="text-sm text-gray-700">{item}</p>
+                  <p className="text-sm ">{item}</p>
                 </div>
               ))}
             </div>
@@ -204,7 +200,7 @@ export function FaceCaptureInstructions({
             {currentStep === instructions.length - 1 ? (
               <Button
                 onClick={onProceed}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                className="flex items-center gap-2 dark:text-white bg-green-600 hover:bg-green-700"
               >
                 <Camera className="w-4 h-4" />
                 Start Camera

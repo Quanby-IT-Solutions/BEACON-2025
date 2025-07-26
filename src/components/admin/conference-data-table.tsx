@@ -58,14 +58,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -79,9 +71,11 @@ import {
 import { Loader2 } from "lucide-react";
 import { PaymentMode, PaymentStatus } from "@prisma/client";
 import * as XLSX from "xlsx";
+import Link from "next/link";
+import ConferenceRegistrationDialog from "@/components/reuseable/page-components/view-conference-details";
 
 // Types
-interface ConferenceData {
+export interface ConferenceData {
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -145,6 +139,72 @@ interface ConferenceDataTableProps {
   isDeleting: boolean;
   currentAdminStatus: "SUPERADMIN" | "ADMIN";
 }
+
+// Helper function to map payment status values
+const mapPaymentStatus = (
+  status: string
+): "pending" | "completed" | "failed" | "refunded" => {
+  const statusMap: Record<
+    string,
+    "pending" | "completed" | "failed" | "refunded"
+  > = {
+    PENDING: "pending",
+    CONFIRMED: "completed",
+    FAILED: "failed",
+    REFUNDED: "refunded",
+  };
+  return statusMap[status] || "pending";
+};
+
+// Helper function to transform ConferenceData to match view-conference-details structure
+const transformConferenceData = (
+  conference: ConferenceData
+): ConferenceData => {
+  return {
+    // Top-level properties that the component expects
+    id: conference.id,
+    createdAt: conference.createdAt,
+    updatedAt: conference.updatedAt,
+
+    // Transformed nested properties
+    personalInfo: {
+      firstName: conference.personalInfo.firstName,
+      middleName: conference.personalInfo.middleName,
+      lastName: conference.personalInfo.lastName,
+      suffix: conference.personalInfo.suffix,
+      preferredName: conference.personalInfo.preferredName,
+      gender: conference.personalInfo.gender,
+      genderOthers: conference.personalInfo.genderOthers,
+      ageBracket: conference.personalInfo.ageBracket,
+      nationality: conference.personalInfo.nationality,
+      faceScannedUrl: conference.personalInfo.faceScannedUrl,
+    },
+    contactInfo: {
+      email: conference.contactInfo.email,
+      mobileNumber: conference.contactInfo.mobileNumber,
+      landline: conference.contactInfo.landline,
+      mailingAddress: conference.contactInfo.mailingAddress,
+      status: conference.contactInfo.status,
+    },
+    conferenceInfo: {
+      isMaritimeLeagueMember: conference.conferenceInfo.isMaritimeLeagueMember,
+      tmlMemberCode: conference.conferenceInfo.tmlMemberCode,
+      jobTitle: conference.conferenceInfo.jobTitle,
+      companyName: conference.conferenceInfo.companyName,
+      industry: conference.conferenceInfo.industry,
+      companyAddress: conference.conferenceInfo.companyAddress,
+      companyWebsite: conference.conferenceInfo.companyWebsite,
+      interestAreas: conference.conferenceInfo.interestAreas,
+      otherInterests: conference.conferenceInfo.otherInterests,
+      receiveEventInvites: conference.conferenceInfo.receiveEventInvites,
+      emailCertificate: conference.conferenceInfo.emailCertificate,
+      photoVideoConsent: conference.conferenceInfo.photoVideoConsent,
+      dataUsageConsent: conference.conferenceInfo.dataUsageConsent,
+    },
+    selectedEvents: conference.selectedEvents,
+    paymentInfo: conference.paymentInfo,
+  };
+};
 
 export function ConferenceDataTable({
   data,
@@ -274,6 +334,14 @@ export function ConferenceDataTable({
     });
   };
 
+  const convertEnumToLabel = (value: string): string => {
+    return value
+      .toUpperCase() // make everything lowercase first
+      .split("_") // split by underscores
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize each word
+      .join(" "); // join with spaces
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<
       string,
@@ -289,36 +357,36 @@ export function ConferenceDataTable({
   };
 
   const getPaymentStatusBadge = (paymentStatus: string) => {
-    // if (isPaid) {
-    //   return (
-    //     <Badge variant="default" className="bg-green-100 text-green-800">
-    //       <CheckCircle className="mr-1 h-3 w-3" />
-    //       Paid
-    //     </Badge>
-    //   );
-    // }
+    if (paymentStatus === "CONFIRMED") {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800">
+          <CheckCircle className="mr-1 h-3 w-3" />
+          Paid
+        </Badge>
+      );
+    }
 
     const statusMap: Record<
       string,
       {
-        variant: "default" | "secondary" | "destructive" | "outline";
+        variant: string;
         icon: React.ReactNode;
       }
     > = {
       PENDING: {
-        variant: "secondary",
-        icon: <Clock className="mr-1 h-3 w-3" />,
+        variant: "bg-amber-500",
+        icon: <Clock className="mr-1 h-3 w-3 " />,
       },
       CONFIRMED: {
-        variant: "default",
-        icon: <CheckCircle className="mr-1 h-3 w-3" />,
+        variant: "bg-green-500",
+        icon: <CheckCircle className="mr-1 h-3 w-3 " />,
       },
       FAILED: {
-        variant: "destructive",
+        variant: "bg-red-500",
         icon: <XCircle className="mr-1 h-3 w-3" />,
       },
       REFUNDED: {
-        variant: "outline",
+        variant: "bg-c1/20",
         icon: <XCircle className="mr-1 h-3 w-3" />,
       },
     };
@@ -329,7 +397,7 @@ export function ConferenceDataTable({
     };
 
     return (
-      <Badge variant={statusConfig.variant}>
+      <Badge className={statusConfig.variant}>
         {statusConfig.icon}
         {paymentStatus}
       </Badge>
@@ -741,7 +809,7 @@ export function ConferenceDataTable({
       },
       cell: ({ row }) => (
         <div className="text-sm">
-          {row.original.paymentInfo.paymentMode || "N/A"}
+          {convertEnumToLabel(row.original.paymentInfo.paymentMode || "N/A")}
         </div>
       ),
     },
@@ -811,248 +879,14 @@ export function ConferenceDataTable({
               <DropdownMenuSeparator />
 
               {/* View Details */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View details
-                  </DropdownMenuItem>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>
-                      Conference Registration:{" "}
-                      {conference.personalInfo.firstName}{" "}
-                      {conference.personalInfo.lastName}
-                    </DialogTitle>
-                    <DialogDescription>
-                      Complete conference registration information
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="grid gap-6">
-                    {/* Personal Information */}
-                    <div>
-                      <h3 className="font-semibold mb-3">
-                        Personal Information
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <label className="font-medium">Full Name:</label>
-                          <p>
-                            {conference.personalInfo.firstName}{" "}
-                            {conference.personalInfo.middleName}{" "}
-                            {conference.personalInfo.lastName}{" "}
-                            {conference.personalInfo.suffix}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Preferred Name:</label>
-                          <p>
-                            {conference.personalInfo.preferredName || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Gender:</label>
-                          <p>
-                            {conference.personalInfo.gender}{" "}
-                            {conference.personalInfo.genderOthers &&
-                              `(${conference.personalInfo.genderOthers})`}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Age Bracket:</label>
-                          <p>{conference.personalInfo.ageBracket}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Nationality:</label>
-                          <p>{conference.personalInfo.nationality}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Contact Information */}
-                    <div>
-                      <h3 className="font-semibold mb-3">
-                        Contact Information
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <label className="font-medium">Email:</label>
-                          <p>{conference.contactInfo.email}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Mobile Number:</label>
-                          <p>{conference.contactInfo.mobileNumber}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Landline:</label>
-                          <p>{conference.contactInfo.landline || "N/A"}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Status:</label>
-                          <p>{getStatusBadge(conference.contactInfo.status)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Conference Information */}
-                    <div>
-                      <h3 className="font-semibold mb-3">
-                        Conference Information
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <label className="font-medium">
-                            Maritime League Member:
-                          </label>
-                          <p>
-                            {getMembershipBadge(
-                              conference.conferenceInfo.isMaritimeLeagueMember
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">
-                            TML Member Code:
-                          </label>
-                          <p>
-                            {conference.conferenceInfo.tmlMemberCode || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Job Title:</label>
-                          <p>{conference.conferenceInfo.jobTitle || "N/A"}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Company:</label>
-                          <p>
-                            {conference.conferenceInfo.companyName || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Industry:</label>
-                          <p>{conference.conferenceInfo.industry || "N/A"}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">
-                            Company Website:
-                          </label>
-                          <p>
-                            {conference.conferenceInfo.companyWebsite || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Interest Areas */}
-                    <div>
-                      <h3 className="font-semibold mb-3">Interest Areas</h3>
-                      <div className="text-sm">
-                        <p>
-                          {conference.conferenceInfo.interestAreas.join(", ") ||
-                            "None specified"}
-                        </p>
-                        {conference.conferenceInfo.otherInterests && (
-                          <p className="mt-2">
-                            <strong>Other Interests:</strong>{" "}
-                            {conference.conferenceInfo.otherInterests}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Selected Events */}
-                    <div>
-                      <h3 className="font-semibold mb-3">Selected Events</h3>
-                      <div className="space-y-2">
-                        {conference.selectedEvents.map((event, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                          >
-                            <div>
-                              <p className="font-medium">{event.name}</p>
-                              <p className="text-sm text-gray-600">
-                                {event.status}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">
-                                ₱{Number(event.price).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Payment Information */}
-                    <div>
-                      <h3 className="font-semibold mb-3">
-                        Payment Information
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <label className="font-medium">Payment Status:</label>
-                          <p>
-                            {getPaymentStatusBadge(
-                              conference.paymentInfo.paymentStatus
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Total Amount:</label>
-                          <p>
-                            ₱
-                            {Number(
-                              conference.paymentInfo.totalAmount || 0
-                            ).toLocaleString()}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="font-medium">Payment Mode:</label>
-                          <p>{conference.paymentInfo.paymentMode || "N/A"}</p>
-                        </div>
-
-                        <div>
-                          <label className="font-medium">
-                            Transaction Reference:
-                          </label>
-                          <p className="font-mono text-xs">
-                            {conference.paymentInfo.referenceNumber || "N/A"}
-                          </p>
-                        </div>
-
-                        {conference?.paymentInfo?.receiptImageUrl && (
-                          <div className="col-span-2">
-                            <label className="font-medium">Receipt:</label>
-                            <div className="mt-2">
-                              <a
-                                href={conference.paymentInfo?.receiptImageUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Receipt
-                              </a>
-                            </div>
-                          </div>
-                        )}
-                        {conference.paymentInfo.notes && (
-                          <div className="col-span-2">
-                            <label className="font-medium">Notes:</label>
-                            <p className="text-sm bg-gray-50 p-2 rounded mt-1">
-                              {conference.paymentInfo.notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <ConferenceRegistrationDialog
+                conference={transformConferenceData(conference)}
+                getStatusBadge={getStatusBadge}
+                getMembershipBadge={(isMember: boolean) =>
+                  getMembershipBadge(isMember ? "YES" : "NO")
+                }
+                getPaymentStatusBadge={getPaymentStatusBadge}
+              />
 
               {/* Delete - Only for SUPERADMIN */}
               {currentAdminStatus === "SUPERADMIN" && (

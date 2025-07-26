@@ -210,9 +210,9 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
       {/* Custom Payment Amount (if needed) */}
 
       {/* Payment Summary */}
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className="dark:bg-c1/30 bg-muted">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-blue-800">
+          <CardTitle className="text-base text-blue-800 dark:text-white">
             Payment Summary
           </CardTitle>
         </CardHeader>
@@ -228,7 +228,7 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
                 <span>₱{parseFloat(customPaymentAmount).toLocaleString()}</span>
               </div>
             )}
-            <div className="border-t pt-2 flex justify-between font-semibold text-blue-800">
+            <div className="border-t pt-2 flex justify-between font-semibold text-blue-800 dark:text-green-500">
               <span>Total Amount:</span>
               <span>{formatPrice(totalAmount)}</span>
             </div>
@@ -237,9 +237,9 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
       </Card>
 
       {/* Receipt Upload Section */}
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-orange-200 bg-orange-50 dark:bg-c1/30 dark:border-c1">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-orange-800 flex items-center gap-2">
+          <CardTitle className="text-base text-orange-800 dark:text-white flex items-center gap-2">
             <Upload className="h-4 w-4" />
             2. Upload Payment Receipt *
           </CardTitle>
@@ -279,21 +279,21 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
                       >
                         {previewUrl ? (
                           <div className="flex flex-col items-center gap-2">
-                            <ImageIcon className="w-6 h-6 text-orange-600" />
-                            <span className="text-sm text-orange-800">
+                            <ImageIcon className="w-6 h-6 text-orange-600 dark:text-white" />
+                            <span className="text-sm text-orange-800 dark:text-white">
                               Receipt Uploaded
                             </span>
-                            <span className="text-xs text-orange-600">
+                            <span className="text-xs text-orange-600 dark:text-white">
                               Click to change
                             </span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-2">
-                            <Upload className="w-6 h-6 text-orange-600" />
-                            <span className="text-sm text-orange-800">
+                            <Upload className="w-6 h-6 text-orange-600 dark:text-white" />
+                            <span className="text-sm text-orange-800 dark:text-white">
                               Click to select receipt
                             </span>
-                            <span className="text-xs text-orange-600">
+                            <span className="text-xs text-orange-600 dark:text-white">
                               PNG, JPG up to 5MB
                             </span>
                           </div>
@@ -321,7 +321,7 @@ export default function PaymentDetails({ form }: PaymentDetailsProps) {
               name="referenceNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reference Number (Optional)</FormLabel>
+                  <FormLabel>Reference Number *</FormLabel>
                   <FormControl>
                     <Input
                       {...field}

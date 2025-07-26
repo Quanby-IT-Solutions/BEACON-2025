@@ -119,13 +119,17 @@ export const useAdminConferencesRealtime = () => {
 
   // Set up realtime subscription
   useEffect(() => {
-    if (!isAuthenticated || !sessionToken) return;
+    if (!isAuthenticated || !sessionToken) {
+      console.log('❌ Realtime not initialized: authentication required');
+      return;
+    }
 
-    console.log('Setting up realtime subscription for conferences...');
+    console.log('🚀 Setting up realtime subscription for conferences...');
 
-    // Create the realtime channel
+    // Create the realtime channel with unique name to avoid conflicts
+    const channelName = `admin-conferences-${Date.now()}`;
     const channel = supabase
-      .channel('admin-conferences-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -134,7 +138,7 @@ export const useAdminConferencesRealtime = () => {
           table: 'conferences'
         },
         (payload) => {
-          console.log('Conferences realtime change:', payload);
+          console.log('📡 Conferences realtime change:', payload);
           
           // Show appropriate toast notification
           switch (payload.eventType) {
@@ -149,8 +153,10 @@ export const useAdminConferencesRealtime = () => {
               break;
           }
           
-          // Refresh the query data
-          invalidateQuery();
+          // Add small delay to ensure data consistency
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -161,7 +167,7 @@ export const useAdminConferencesRealtime = () => {
           table: 'conference_payments'
         },
         (payload) => {
-          console.log('Conference payments realtime change:', payload);
+          console.log('💳 Conference payments realtime change:', payload);
           
           // Show appropriate toast notification for payment changes
           switch (payload.eventType) {
@@ -182,8 +188,10 @@ export const useAdminConferencesRealtime = () => {
               break;
           }
           
-          // Refresh the query data
-          invalidateQuery();
+          // Add small delay to ensure data consistency
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -194,9 +202,11 @@ export const useAdminConferencesRealtime = () => {
           table: 'summary_of_payments'
         },
         (payload) => {
-          console.log('Summary of payments realtime change:', payload);
+          console.log('📊 Summary of payments realtime change:', payload);
           // Refresh conferences data when summary of payments change
-          invalidateQuery();
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -207,9 +217,11 @@ export const useAdminConferencesRealtime = () => {
           table: 'user_details'
         },
         (payload) => {
-          console.log('User details realtime change:', payload);
+          console.log('👤 User details realtime change:', payload);
           // Refresh conferences data when user details change
-          invalidateQuery();
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -220,22 +232,38 @@ export const useAdminConferencesRealtime = () => {
           table: 'user_accounts'
         },
         (payload) => {
-          console.log('User accounts realtime change:', payload);
+          console.log('📧 User accounts realtime change:', payload);
           // Refresh conferences data when user accounts change
-          invalidateQuery();
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .subscribe((status) => {
-        console.log('Conferences realtime subscription status:', status);
+        console.log('📡 Conferences realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
           console.log('✅ Successfully subscribed to conferences realtime updates');
+          toast.success('🔴 Conference realtime monitoring active!');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Conference realtime subscription error');
+          toast.error('⚠️ Conference realtime connection failed');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Conference realtime subscription timed out');
+          toast.error('⏰ Conference realtime connection timeout');
+        } else if (status === 'CLOSED') {
+          console.log('🔒 Conference realtime subscription closed');
         }
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('Cleaning up conferences realtime subscription...');
-      channel.unsubscribe();
+      console.log('🧹 Cleaning up conferences realtime subscription...');
+      try {
+        channel.unsubscribe();
+        console.log('✅ Conferences realtime subscription cleaned up successfully');
+      } catch (error) {
+        console.error('❌ Error cleaning up conferences realtime subscription:', error);
+      }
     };
   }, [isAuthenticated, sessionToken, invalidateQuery]);
 

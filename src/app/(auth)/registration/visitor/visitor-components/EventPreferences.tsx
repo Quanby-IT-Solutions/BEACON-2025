@@ -27,8 +27,8 @@ import {
   RegistrationFormData,
   eventPartsOptions,
 } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
-import { EventDay, InterestArea } from "@prisma/client";
-import { useEventSelection } from "@/hooks/tanstasck-query/useEventsQuery";
+import { InterestArea } from "@prisma/client";
+import { useVisitorEventSelection } from "@/hooks/tanstasck-query/useVisitorEventsQuery";
 import { useRegistrationStore } from "@/hooks/standard-hooks/visitor/useRegistrationStore";
 
 interface EventPreferencesProps {
@@ -42,9 +42,9 @@ export function EventPreferences({ form }: EventPreferencesProps) {
     events = [],
     isLoading,
     error,
-    calculateTotalPrice,
     getEventsByIds,
-  } = useEventSelection();
+    formatEventDateRange,
+  } = useVisitorEventSelection();
 
   // Watch selected event IDs
   const selectedEventIds = form.watch("attendingDays") || [];
@@ -64,7 +64,7 @@ export function EventPreferences({ form }: EventPreferencesProps) {
         const eventsWithDetails = selected.map((event) => ({
           id: event.id,
           name: event.eventName,
-          price: Number(event.eventPrice),
+          price: 0, // VisitorEvents don't have pricing
         }));
 
         updateSelectedEvents(eventsWithDetails);
@@ -74,18 +74,6 @@ export function EventPreferences({ form }: EventPreferencesProps) {
     }
   }, [selectedEventIds, events]);
 
-  const formatPrice = (price: number) => {
-    return price === 0 ? "FREE" : `₱${price.toLocaleString()}`;
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   const getEventStatusColor = (status: string) => {
     switch (status) {
@@ -189,16 +177,10 @@ export function EventPreferences({ form }: EventPreferencesProps) {
                                 >
                                   {event.eventStatus}
                                 </Badge>
-                                {/* <Badge
-                                  variant="outline"
-                                  className="font-semibold"
-                                >
-                                  {formatPrice(Number(event.eventPrice))}
-                                </Badge> */}
                               </div>
                               <div className="flex items-center text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4 mr-2" />
-                                {formatDate(new Date(event.eventDate))}
+                                {formatEventDateRange(event)}
                               </div>
                             </FormLabel>
                           </FormItem>

@@ -236,7 +236,7 @@ export const BOAT_SHOW_PRICE = 0; // FREE
 // Receipt upload schema (for form validation only, file handled separately)
 export const receiptUploadSchema = z.object({
   conferenceId: z.string().min(1, "Conference ID is required"),
-  referenceNumber: z.string().optional().nullable(),
+  referenceNumber: z.string().min(1, "Enter the correct reference number"),
 });
 
 export type ReceiptUploadFormData = z.infer<typeof receiptUploadSchema>;

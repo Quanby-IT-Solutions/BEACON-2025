@@ -44,6 +44,7 @@ import { UserDetails } from "./visitor-components/UserDetails";
 import { UserAccounts } from "./visitor-components/UserAccounts";
 import { Icon } from "@iconify/react";
 import { DraftManagerVisitor } from "./components/DraftManager";
+import { ModeToggle } from "@/components/reuseable/page-components/ModeToggle";
 
 export default function VisitorRegistrationPage() {
   const {
@@ -449,17 +450,27 @@ export default function VisitorRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col gap-6">
-        <img src="/images/beacon-reg.png" className="rounded-lg" alt="" />
-        <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2">
+    <div className="min-h-screen flex flex-col bg-blue-300/20 dark:bg-c1">
+      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col gap-6 z-10">
+        <div className="relative w-fit h-fit rounded-lg overflow-hidden group">
+          <div className="z-10 group-hover:bg-black/30 duration-300 w-full h-full absolute"></div>
+          <img
+            src="/images/beacon-reg.png"
+            className=" object-contain"
+            alt=""
+          />
+          <div className="w-fit h-fit absolute bottom-4 right-4 z-20">
+            <ModeToggle />
+          </div>
+        </div>
+        <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2 dark:bg-white/20">
           <CardHeader className="shrink-0 p-0">
             <CardTitle className="text-2xl uppercase">
               BEACON 2025 Visitor Registration
             </CardTitle>
             <div className="w-24 max-w-24 border-c1 border-2 rounded-full h-1 bg-c1"></div>
             <CardDescription className="">
-              <div className="text-accent-foreground dark:text-accent">
+              <div className="text-accent-foreground">
                 <p className="font-semibold">
                   Official Registration Form – Conference | Philippine Ships &
                   Boats In-Water Show | Blue Runway Fashion Show
@@ -475,9 +486,9 @@ export default function VisitorRegistrationPage() {
             <div className="mb-4 shrink-0">
               <DraftManagerVisitor />
             </div>
-            <div className="flex-1 overflow-y-auto pb-32">
+            <div className="flex-1 overflow-y-auto">
               <Form {...form}>
-                <div className="relative lg:p-2">
+                <div className="relative lg:pr-0 pr-1">
                   {isSubmitting && (
                     <div className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 flex items-center justify-center">
                       <div className="text-center space-y-2">
@@ -497,8 +508,6 @@ export default function VisitorRegistrationPage() {
                       setTimeout(scrollToFirstError, 100);
                     })}
                   >
-                    <div className="max-w-sm mx-auto border-c1 border rounded-full mt-6 mb-12 h-1 bg-c1"></div>
-
                     {/* Personal Information */}
                     <div
                       ref={personalContainerRef}
@@ -506,7 +515,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:account"
                           width="24"
                           height="24"
@@ -537,7 +546,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:email"
                           width="24"
                           height="24"
@@ -568,7 +577,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:calendar-multiple"
                           width="24"
                           height="24"
@@ -598,7 +607,7 @@ export default function VisitorRegistrationPage() {
                       >
                         <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                           <Icon
-                            className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                            className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                             icon="mdi:briefcase"
                             width="24"
                             height="24"
@@ -630,7 +639,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:shield-check"
                           width="24"
                           height="24"
@@ -661,7 +670,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="mdi:information"
                           width="24"
                           height="24"
@@ -690,7 +699,7 @@ export default function VisitorRegistrationPage() {
                     >
                       <div className="flex-none flex flex-col items-center justify-start space-y-1 pr-2 pb-1 ">
                         <Icon
-                          className="rounded-full bg-c1/30 text-c1 border-2 border-c1 lg:p-1 lg:h-12 lg:w-12 h-6 w-6"
+                          className="rounded-full bg-c1/30 text-c1 dark:text-white dark:border-white border-2 border-c1 lg:p-2 p-1 lg:h-12 lg:w-12 h-6 w-6"
                           icon="line-md:downloading-loop"
                           width="24"
                           height="24"
@@ -698,7 +707,7 @@ export default function VisitorRegistrationPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4 pb-8">
+                    <div className="space-y-4 ">
                       <Button
                         type="submit"
                         className="w-full cursor-pointer"
@@ -728,7 +737,7 @@ export default function VisitorRegistrationPage() {
           </CardContent>
         </Card>
       </div>
-      <RegistrationProgress form={form} />
+      {/* <RegistrationProgress form={form} /> */}
 
       {/* Success Dialog */}
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>

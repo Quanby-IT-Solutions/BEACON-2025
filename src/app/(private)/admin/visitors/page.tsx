@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Users, LogOut } from "lucide-react";
+import { Loader2, Users, LogOut, Bug } from "lucide-react";
+import { runRealtimeTests } from "@/lib/supabase-realtime-debug";
 import { useAdminStore } from "@/stores/adminStore";
 import {
   useAdminVisitors,
@@ -114,9 +115,23 @@ export default function VisitorsDashboard() {
                     </p>
                   )}
                 </div>
-                <Button variant="outline" onClick={() => refetch()}>
-                  Refresh
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      console.log('🧪 Running realtime tests...');
+                      runRealtimeTests();
+                      toast.info('🔬 Realtime tests started - check console for results');
+                    }}
+                  >
+                    <Bug className="h-4 w-4 mr-2" />
+                    Test Realtime
+                  </Button>
+                  <Button variant="outline" onClick={() => refetch()}>
+                    Refresh
+                  </Button>
+                </div>
               </div>
 
               <VisitorsDataTable

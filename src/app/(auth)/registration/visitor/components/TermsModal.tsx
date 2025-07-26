@@ -34,7 +34,7 @@ export function TermsModal({ trigger }: TermsModalProps) {
             Registration Terms for the Maritime Industry Event
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-1 pr-4 overflow-y-auto">
+        <ScrollArea className="flex-1 pr-4 overflow-y-auto scroll-none">
           <div className="space-y-6 text-sm leading-relaxed">
             <section>
               <h3 className="text-lg font-semibold mb-3">
@@ -202,7 +202,7 @@ export function TermsModal({ trigger }: TermsModalProps) {
                 For questions regarding these terms and conditions or the event,
                 please contact:
               </p>
-              <div className="mt-2 p-3 bg-muted rounded-md">
+              <div className="mt-2 p-3 dark:bg-muted-foreground/30 bg-muted rounded-md">
                 <p>
                   <strong>BEACON 2025 Organizing Committee</strong>
                 </p>

@@ -67,7 +67,7 @@ export default function ContactDetails({ form }: ContactDetailsProps) {
                 </div>
 
                 {emailCheck?.exists && (
-                  <Alert variant="destructive" className="py-2">
+                  <Alert variant="destructive" className="py-2 bg-background">
                     <XCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm">
                       This email is already registered. Please use a different
@@ -100,19 +100,23 @@ export default function ContactDetails({ form }: ContactDetailsProps) {
                 <FormLabel className="text-base">2. Phone *</FormLabel>
                 <FormControl>
                   <div className="relative flex items-center">
-                    <div className="absolute left-3 z-10 bg-background px-1 ">
-                      +63
-                    </div>
+                    {/* Static prefix */}
+                    <div className="absolute left-3 z-10 px-1">+63</div>
                     <Input
-                      placeholder="Enter your phone number"
+                      placeholder="9XXXXXXXXX"
                       {...field}
+                      // Display only the part after +63
                       value={field.value?.replace("+63", "") || ""}
                       onChange={(e) => {
-                        const numbersOnly = e.target.value.replace(/\D/g, "");
-                        const truncated = numbersOnly.slice(0, 10);
+                        let numbersOnly = e.target.value.replace(/\D/g, "");
+                        // enforce first digit is 9
+                        if (numbersOnly.length > 0 && numbersOnly[0] !== "9") {
+                          numbersOnly = "9" + numbersOnly.replace(/^9*/, "");
+                        }
+                        const truncated = numbersOnly.slice(0, 10); // enforce 10 digits including the starting 9
                         field.onChange(`+63${truncated}`);
                       }}
-                      className="pl-12 "
+                      className="pl-12"
                       maxLength={10}
                     />
                   </div>

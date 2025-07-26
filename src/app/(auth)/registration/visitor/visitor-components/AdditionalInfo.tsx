@@ -25,15 +25,13 @@ interface AdditionalInfoProps {
 export function AdditionalInfo({ form }: AdditionalInfoProps) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Additional Information</h3>
-
       <FormField
         control={form.control}
         name="hearAboutEvent"
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="space-y-4">
             <div className="flex items-center justify-between">
-              <FormLabel>How did you hear about this event? *</FormLabel>
+              <FormLabel>1. How did you hear about this event? *</FormLabel>
               <FormMessage />
             </div>
             <Select onValueChange={field.onChange} value={field.value || ""}>
@@ -82,11 +80,11 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
       )}
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="text-base font-semibold">Data Privacy Consent</h4>
+        <div className="flex lg:flex-row flex-col justify-between space-y-2">
+          <h4 className="text-base font-semibold">2. Data Privacy Consent</h4>
           <TermsModal />
         </div>
-        
+
         <FormField
           control={form.control}
           name="dataPrivacyConsent"
@@ -96,12 +94,14 @@ export function AdditionalInfo({ form }: AdditionalInfoProps) {
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  className="mt-1"
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
+                <FormLabel className="leading-5">
                   I consent to the collection and processing of my personal data
-                  in accordance with the Data Privacy Act and agree to the Terms & Conditions. *
+                  in accordance with the Data Privacy Act and agree to the Terms
+                  & Conditions. *
                 </FormLabel>
               </div>
               <FormMessage />

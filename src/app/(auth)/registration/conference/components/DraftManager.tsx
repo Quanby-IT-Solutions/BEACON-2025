@@ -10,7 +10,7 @@ import {
 
 export function DraftManager() {
   return (
-    <Card className="mb-4 bg-muted">
+    <Card className="mb-4 dark:bg-c1/30 bg-muted">
       <CardContent>
         <div className="flex items-start gap-2">
           <Icon

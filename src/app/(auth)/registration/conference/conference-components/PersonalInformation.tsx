@@ -243,13 +243,13 @@ export default function PersonalInformation({
         )}
 
         {/* Face Capture Section */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="dark:bg-c1/30 bg-muted">
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <span className="font-medium">9. Photo Capture *</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm ">
                 Please capture a clear photo of yourself for identification
                 purposes.
               </p>

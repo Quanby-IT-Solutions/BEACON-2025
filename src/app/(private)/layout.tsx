@@ -57,12 +57,12 @@ export default function AdminLayout({
     <AuthGuard>
       <SidebarProvider>
         <AppSidebar />
-        <div className="flex h-screen w-full flex-col">
+        <div className="flex h-screen w-full flex-col bg-muted">
           <PrivateHeader />
 
-          <SidebarInset>
+          <SidebarInset className="bg-muted">
             <main className="w-full h-full">
-              <CardContent className="p-0">{children}</CardContent>
+              <CardContent className="p-0 bg-muted">{children}</CardContent>
             </main>
           </SidebarInset>
         </div>

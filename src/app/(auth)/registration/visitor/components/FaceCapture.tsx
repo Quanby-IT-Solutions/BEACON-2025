@@ -401,15 +401,15 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
         <div className="space-y-4">
           <div className="w-48 h-48 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
             <div className="text-center">
-              <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">No photo taken</p>
+              <Camera className="w-8 h-8  mx-auto mb-2" />
+              <p className="text-sm">No photo taken</p>
             </div>
           </div>
 
           {/* Camera Loading Progress */}
           {!modelsLoaded && modelLoadingProgress > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Loading face detection models...
               </div>

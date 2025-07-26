@@ -24,7 +24,7 @@ export type AgeBracket = 'UNDER_18' | 'AGE_18_24' | 'AGE_25_34' | 'AGE_35_44' | 
 // Event types
 export type EventStatusEnum = 'CONFERENCE' | 'SHOW' | 'WORKSHOP' | 'SEMINAR' | 'EXHIBITION';
 
-// Events Model Type
+// Events Model Type (for Conference payments)
 export interface Event {
   id: string;
   createdAt: Date;
@@ -38,6 +38,21 @@ export interface Event {
   eventStartTime?: Date;
   eventEndTime?: Date;
   summaryOfPayments?: SummaryOfPayments[];
+}
+
+// VisitorEvents Model Type (for Visitor registration display)
+export interface VisitorEvent {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  eventName: string;
+  eventDateStart: Date;
+  eventDateEnd: Date;
+  eventStatus: EventStatusEnum;
+  isActive: boolean;
+  description?: string;
+  eventStartTime?: Date;
+  eventEndTime?: Date;
 }
 
 // Summary of Payments Model Type

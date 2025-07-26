@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, AlertTriangle } from "lucide-react";
 import { ConsentAndConfirmationProps } from "@/types/conference/components";
+import { TermsModal } from "../../visitor/components/TermsModal";
 
 export default function ConsentAndConfirmation({
   form,
@@ -20,85 +21,70 @@ export default function ConsentAndConfirmation({
     <div className="space-y-6">
       <div className="space-y-6">
         {/* Data Usage Consent - Required */}
-        <Card className="border-red-200 bg-red-50">
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="dataUsageConsent"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <div className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="border-red-400 data-[state=checked]:bg-red-600 mt-1"
-                      />
-                    </FormControl>
-                    <div className="space-y-2 leading-none">
-                      <FormLabel className="flex items-center gap-2 text-base font-medium cursor-pointer text-red-900">
-                        <AlertTriangle className="h-4 w-4" />
-                        Data Privacy & Usage Consent *
-                      </FormLabel>
-                      <FormDescription className="text-sm text-red-800">
-                        I consent to the collection, processing, and use of my
-                        personal data in accordance with the Data Privacy Act of
-                        2012. This includes my registration information,
-                        captured photos, and contact details for the purpose of
-                        conference registration, identification, and
-                        event-related communications.
-                      </FormDescription>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-red-700 font-medium">
-                          Required for registration
-                        </span>
-                        <FormMessage />
-                      </div>
-                    </div>
-                  </div>
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex lg:flex-row flex-col justify-between space-y-2">
+            <h4 className="text-base font-semibold">2. Data Privacy Consent</h4>
+            <TermsModal />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="dataUsageConsent"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="mt-1"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="leading-5 ">
+                    I consent to the collection and processing of my personal
+                    data in accordance with the Data Privacy Act and agree to
+                    the Terms & Conditions. *
+                  </FormLabel>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Email Certificate */}
-        <Card className="border-green-200 bg-green-50">
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="emailCertificate"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <div className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-1"
-                      />
-                    </FormControl>
-                    <div className="space-y-2 leading-none">
-                      <FormLabel className="flex items-center gap-2 text-base font-medium cursor-pointer text-green-900">
-                        <Mail className="h-4 w-4" />
-                        Digital Certificate Request
-                      </FormLabel>
-                      <FormDescription className="text-sm text-green-700">
-                        I would like to receive a digital certificate of
-                        attendance via email after the conference. This
-                        certificate will be sent to the email address provided
-                        in my registration.
-                      </FormDescription>
-                      <span className="text-xs text-green-600">
-                        Free digital certificate via email
-                      </span>
-                    </div>
-                  </div>
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+
+        <FormField
+          control={form.control}
+          name="emailCertificate"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <div className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="mt-1"
+                  />
+                </FormControl>
+                <div className="space-y-2 leading-none">
+                  <FormLabel className="flex items-center gap-2 text-base font-medium cursor-pointer text-green-900  dark:text-accent-foreground">
+                    <Mail className="h-4 w-4" />
+                    Digital Certificate Request
+                  </FormLabel>
+                  <FormDescription className="text-sm text-green-700">
+                    I would like to receive a digital certificate of attendance
+                    via email after the conference. This certificate will be
+                    sent to the email address provided in my registration.
+                  </FormDescription>
+                  <span className="text-xs text-green-600">
+                    Free digital certificate via email
+                  </span>
+                </div>
+              </div>
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );

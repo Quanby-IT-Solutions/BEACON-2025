@@ -113,13 +113,17 @@ export const useAdminVisitorsRealtime = () => {
 
   // Set up realtime subscription
   useEffect(() => {
-    if (!isAuthenticated || !sessionToken) return;
+    if (!isAuthenticated || !sessionToken) {
+      console.log('❌ Visitors realtime not initialized: authentication required');
+      return;
+    }
 
-    console.log('Setting up realtime subscription for visitors...');
+    console.log('🚀 Setting up realtime subscription for visitors...');
 
-    // Create the realtime channel
+    // Create the realtime channel with unique name to avoid conflicts
+    const channelName = `admin-visitors-${Date.now()}`;
     const channel = supabase
-      .channel('admin-visitors-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -128,7 +132,7 @@ export const useAdminVisitorsRealtime = () => {
           table: 'visitors'
         },
         (payload) => {
-          console.log('Visitors realtime change:', payload);
+          console.log('📡 Visitors realtime change:', payload);
           
           // Show appropriate toast notification
           switch (payload.eventType) {
@@ -143,8 +147,10 @@ export const useAdminVisitorsRealtime = () => {
               break;
           }
           
-          // Refresh the query data
-          invalidateQuery();
+          // Add small delay to ensure data consistency
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -155,9 +161,11 @@ export const useAdminVisitorsRealtime = () => {
           table: 'user_details'
         },
         (payload) => {
-          console.log('User details realtime change:', payload);
+          console.log('👤 User details realtime change:', payload);
           // Refresh visitors data when user details change
-          invalidateQuery();
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .on(
@@ -168,22 +176,53 @@ export const useAdminVisitorsRealtime = () => {
           table: 'user_accounts'
         },
         (payload) => {
-          console.log('User accounts realtime change:', payload);
+          console.log('📧 User accounts realtime change:', payload);
           // Refresh visitors data when user accounts change
-          invalidateQuery();
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'visitor_events'
+        },
+        (payload) => {
+          console.log('📅 Visitor events realtime change:', payload);
+          // Refresh visitors data when visitor events change
+          setTimeout(() => {
+            invalidateQuery();
+          }, 100);
         }
       )
       .subscribe((status) => {
-        console.log('Visitors realtime subscription status:', status);
+        console.log('📡 Visitors realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
           console.log('✅ Successfully subscribed to visitors realtime updates');
+          toast.success('🔴 Visitor realtime monitoring active!');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Visitors realtime subscription error');
+          toast.error('⚠️ Visitor realtime connection failed');
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏰ Visitors realtime subscription timed out');
+          toast.error('⏰ Visitor realtime connection timeout');
+        } else if (status === 'CLOSED') {
+          console.log('🔒 Visitors realtime subscription closed');
         }
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('Cleaning up visitors realtime subscription...');
-      channel.unsubscribe();
+      console.log('🧹 Cleaning up visitors realtime subscription...');
+      try {
+        channel.unsubscribe();
+        console.log('✅ Visitors realtime subscription cleaned up successfully');
+      } catch (error) {
+        console.error('❌ Error cleaning up visitors realtime subscription:', error);
+      }
     };
   }, [isAuthenticated, sessionToken, invalidateQuery]);
 
