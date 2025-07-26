@@ -143,6 +143,107 @@ enum ManagerStatus {
   ADMIN
 }
 
+enum IndustrySector {
+  SHIPBUILDING_BOATBUILDING
+  MARITIME_EQUIPMENT_TECHNOLOGY
+  NAVAL_DEFENSE
+  PORT_LOGISTICS
+  MARINE_TOURISM
+  RENEWABLE_GREEN
+  FASHION_LIFESTYLE
+  EDUCATION_TRAINING
+  OTHERS
+}
+
+enum ParticipationType {
+  INDOOR_BOOTH
+  RAW_SPACE
+  IN_WATER_DISPLAY
+  BLUE_RUNWAY
+  PRODUCT_LAUNCH
+  CO_BRANDING
+}
+
+enum BoothSize {
+  SIZE_2X2
+  SIZE_2X3
+  SIZE_3X3
+  SIZE_6X3
+  RAW_SPACE_MIN_18
+  CUSTOM_SETUP
+}
+
+enum YesNoMaybe {
+  YES
+  NO
+  MAYBE
+}
+
+enum GoalType {
+  SHOWCASE_PRODUCTS
+  MEET_BUYERS
+  PROMOTE_BRAND
+  LAUNCH_NEW_PRODUCT
+  ENGAGE_GOV_AGENCIES
+  JOIN_BLUE_ECONOMY
+  RECRUIT_TALENT
+  OTHERS
+}
+
+enum ConfirmIntent {
+  YES_RESERVE
+  TENTATIVE
+  NO_EXPLORING
+}
+
+enum SponsorshipCategory {
+  TITLE_SPONSOR
+  MAJOR_PARTNER
+  CONFERENCE_SPONSOR
+  IN_WATER_SHOW_SPONSOR
+  BLUE_RUNWAY_SPONSOR
+  NETWORKING_AWARDS_SPONSOR
+  PANEL_KEYNOTE_SUPPORTER
+  EXHIBIT_BAG_LANYARD_TOKEN
+  CUSTOM_PACKAGE
+}
+
+enum SponsorshipAudience {
+  GOVERNMENT
+  SHIPPING_MARITIME
+  TOURISM_TRAVEL
+  MARINE_INNOVATION_TECH
+  EDUCATION_YOUNG_PROFESSIONALS
+  LIFESTYLE_FASHION_COMMUNITY
+  OTHERS
+}
+
+enum SponsorshipActivation {
+  SPEAKING_SLOT_PRESENTATION
+  LOGO_VISIBILITY
+  DIGITAL_MEDIA_PROMOTIONS
+  BOOTH_PRODUCT_DISPLAY
+  PRESS_MATERIALS
+  VIP_NETWORKING_ACCESS
+  CO_BRANDED_ACTIVITIES
+  OTHERS
+}
+
+enum SponsorshipBudgetRange {
+  RANGE_50K_100K
+  RANGE_100K_250K
+  RANGE_250K_500K
+  RANGE_500K_1M
+  RANGE_1M_ABOVE
+  TO_BE_DISCUSSED
+}
+
+enum ProposalOption {
+  YES
+  NO
+  SCHEDULE_MEETING
+}
+
 //=================================
 // MODELS
 //=================================
@@ -169,6 +270,7 @@ model Users {
 
   CodeDistribution       CodeDistribution[]
   ExhibitorRegistrations exhibitor_registrations[]
+  sponsorship_interests  sponsorship_interests[]
 
   @@map("users")
 }
@@ -420,56 +522,46 @@ model exhibitor_registrations {
   @@map("exhibitor_registrations")
 }
 
-// 🔷 ENUMS
-enum IndustrySector {
-  SHIPBUILDING_BOATBUILDING
-  MARITIME_EQUIPMENT_TECHNOLOGY
-  NAVAL_DEFENSE
-  PORT_LOGISTICS
-  MARINE_TOURISM
-  RENEWABLE_GREEN
-  FASHION_LIFESTYLE
-  EDUCATION_TRAINING
-  OTHERS
-}
+model sponsorship_interests {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-enum ParticipationType {
-  INDOOR_BOOTH
-  RAW_SPACE
-  IN_WATER_DISPLAY
-  BLUE_RUNWAY
-  PRODUCT_LAUNCH
-  CO_BRANDING
-}
+  // 👇 Link back to Users (same pattern as your other tables)
+  userId String
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-enum BoothSize {
-  SIZE_2X2
-  SIZE_2X3
-  SIZE_3X3
-  SIZE_6X3
-  RAW_SPACE_MIN_18
-  CUSTOM_SETUP
-}
+  // 🔷 SECTION 1: Company & Contact Details
+  companyName              String
+  businessRegistrationName String?
+  industrySector           IndustrySector
+  industrySectorOthers     String?
+  companyAddress           String?
+  companyWebsite           String?
+  companyProfile           String?
 
-enum YesNoMaybe {
-  YES
-  NO
-  MAYBE
-}
+  // 🔷 SECTION 2: Contact Person
+  contactFullName String
+  contactPosition String
+  contactEmail    String
+  contactMobile   String
+  contactLandline String?
 
-enum GoalType {
-  SHOWCASE_PRODUCTS
-  MEET_BUYERS
-  PROMOTE_BRAND
-  LAUNCH_NEW_PRODUCT
-  ENGAGE_GOV_AGENCIES
-  JOIN_BLUE_ECONOMY
-  RECRUIT_TALENT
-  OTHERS
-}
+  // 🔷 SECTION 3: Sponsorship Interest
+  sponsorshipCategories SponsorshipCategory[] // ✅ array for multi‑select
+  targetAudience        SponsorshipAudience[] // ✅ array for multi‑select
+  targetAudienceOthers  String?
 
-enum ConfirmIntent {
-  YES_RESERVE
-  TENTATIVE
-  NO_EXPLORING
+  // 🔷 SECTION 4: Activation Preferences
+  activationPreferences SponsorshipActivation[] // ✅ array for multi‑select
+  activationOthers      String?
+  launchProduct         YesNoMaybe?
+
+  // 🔷 SECTION 5: Budget & Next Steps
+  budgetRange        SponsorshipBudgetRange
+  customizedProposal ProposalOption
+  uploadUrl          String? // file path for logo/materials
+  additionalComments String?
+
+  @@map("sponsorship_interests")
 }
