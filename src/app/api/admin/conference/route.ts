@@ -120,25 +120,16 @@ export async function GET(request: NextRequest) {
         otherInterests: conference.otherInterests,
         receiveEventInvites: conference.receiveEventInvites,
         emailCertificate: conference.emailCertificate,
-        photoVideoConsent: conference.photoVideoConsent,
         dataUsageConsent: conference.dataUsageConsent,
       },
 
       // Payment Information
       paymentInfo: {
-        totalPaymentAmount: conference.totalPaymentAmount,
-        customPaymentAmount: conference.customPaymentAmount,
-        requiresPayment: conference.requiresPayment,
-        paymentToken: conference.paymentToken,
-        paymentTokenExpiry: conference.paymentTokenExpiry,
+
         // Conference Payment details
         paymentStatus: conference.ConferencePayment?.paymentStatus || 'PENDING',
         paymentMode: conference.ConferencePayment?.paymentMode || null,
-        isPaid: conference.ConferencePayment?.isPaid || false,
-        paymentConfirmedAt: conference.ConferencePayment?.paymentConfirmedAt || null,
-        paymentConfirmedBy: conference.ConferencePayment?.paymentConfirmedBy || null,
-        paymongoCheckoutId: conference.ConferencePayment?.paymongoCheckoutId || null,
-        transactionId: conference.ConferencePayment?.transactionId || null,
+
       },
 
       // Selected Events

@@ -31,7 +31,7 @@ import { toast } from "sonner";
 
 const createCodeSchema = z.object({
   code: z.string().min(1, "Code is required").max(50, "Code must be 50 characters or less"),
-  isActive: z.boolean().default(false),
+  isActive: z.boolean(),
 });
 
 type CreateCodeFormData = z.infer<typeof createCodeSchema>;

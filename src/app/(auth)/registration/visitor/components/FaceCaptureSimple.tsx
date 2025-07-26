@@ -111,8 +111,6 @@ export function FaceCapture({ onCapture, capturedImage }: FaceCaptureProps) {
       const imageSrc = webcamRef.current.getScreenshot({
         width: 640,
         height: 480,
-        screenshotFormat: "image/jpeg",
-        screenshotQuality: 0.8,
       });
 
       if (imageSrc) {

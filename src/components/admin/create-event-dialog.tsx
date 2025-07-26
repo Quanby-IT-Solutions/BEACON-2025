@@ -47,15 +47,13 @@ import { EventStatusEnum } from "@prisma/client";
 
 const createEventSchema = z.object({
   eventName: z.string().min(1, "Event name is required"),
-  eventDate: z.date({
-    required_error: "Event date is required",
-  }),
+  eventDate: z.date(),
   eventStartTime: z.string().optional(),
   eventEndTime: z.string().optional(),
   eventPrice: z.number().min(0, "Price must be 0 or positive"),
   eventStatus: z.nativeEnum(EventStatusEnum),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 });
 
 type CreateEventFormData = z.infer<typeof createEventSchema>;
@@ -74,10 +72,15 @@ interface CreateEventDialogProps {
     description?: string;
     isActive: boolean;
   };
-  mode?: 'create' | 'edit';
+  mode?: "create" | "edit";
 }
 
-export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode = 'create' }: CreateEventDialogProps) {
+export function CreateEventDialog({
+  trigger,
+  onEventCreated,
+  editingEvent,
+  mode = "create",
+}: CreateEventDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -89,7 +92,7 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
 
   // Get initial values based on mode
   const getInitialValues = () => {
-    if (mode === 'edit' && editingEvent) {
+    if (mode === "edit" && editingEvent) {
       return {
         eventName: editingEvent.eventName,
         eventDate: new Date(editingEvent.eventDate),
@@ -118,7 +121,7 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
   });
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen && mode === 'edit' && editingEvent) {
+    if (newOpen && mode === "edit" && editingEvent) {
       // Load editing data when opening in edit mode
       form.reset(getInitialValues());
     } else if (!newOpen && !isSubmitting) {
@@ -148,9 +151,11 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
       }
 
       const eventData = {
-        ...(mode === 'edit' && editingEvent ? { id: editingEvent.id } : {}),
+        ...(mode === "edit" && editingEvent ? { id: editingEvent.id } : {}),
         eventName: data.eventName,
-        eventDate: data.eventDate ? data.eventDate.toISOString() : new Date().toISOString(),
+        eventDate: data.eventDate
+          ? data.eventDate.toISOString()
+          : new Date().toISOString(),
         eventStartTime: eventStartTime?.toISOString(),
         eventEndTime: eventEndTime?.toISOString(),
         eventPrice: data.eventPrice,
@@ -160,7 +165,7 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
       };
 
       const response = await fetch("/api/events", {
-        method: mode === 'edit' ? "PUT" : "POST",
+        method: mode === "edit" ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -173,14 +178,18 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
       }
 
       const result = await response.json();
-      
-      toast.success(`Event ${mode === 'edit' ? 'updated' : 'created'} successfully!`);
+
+      toast.success(
+        `Event ${mode === "edit" ? "updated" : "created"} successfully!`
+      );
       form.reset(getInitialValues());
       handleOpenChange(false);
       onEventCreated();
     } catch (error) {
       console.error("Error creating event:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create event");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create event"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -188,19 +197,16 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'edit' ? 'Edit Event' : 'Create New Event'}
+            {mode === "edit" ? "Edit Event" : "Create New Event"}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'edit' 
-              ? 'Update the event details for the BEACON 2025 conference system.'
-              : 'Add a new event to the BEACON 2025 conference system.'
-            }
+            {mode === "edit"
+              ? "Update the event details for the BEACON 2025 conference system."
+              : "Add a new event to the BEACON 2025 conference system."}
           </DialogDescription>
         </DialogHeader>
 
@@ -271,18 +277,31 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Event Status *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select event status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={EventStatusEnum.CONFERENCE}>Conference</SelectItem>
-                        <SelectItem value={EventStatusEnum.SHOW}>Show</SelectItem>
-                        <SelectItem value={EventStatusEnum.WORKSHOP}>Workshop</SelectItem>
-                        <SelectItem value={EventStatusEnum.SEMINAR}>Seminar</SelectItem>
-                        <SelectItem value={EventStatusEnum.EXHIBITION}>Exhibition</SelectItem>
+                        <SelectItem value={EventStatusEnum.CONFERENCE}>
+                          Conference
+                        </SelectItem>
+                        <SelectItem value={EventStatusEnum.SHOW}>
+                          Show
+                        </SelectItem>
+                        <SelectItem value={EventStatusEnum.WORKSHOP}>
+                          Workshop
+                        </SelectItem>
+                        <SelectItem value={EventStatusEnum.SEMINAR}>
+                          Seminar
+                        </SelectItem>
+                        <SelectItem value={EventStatusEnum.EXHIBITION}>
+                          Exhibition
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -352,7 +371,9 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
                         step="0.01"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
                       />
                     </FormControl>
                     <FormDescription>Enter 0 for free events</FormDescription>
@@ -419,10 +440,12 @@ export function CreateEventDialog({ trigger, onEventCreated, editingEvent, mode 
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {mode === 'edit' ? 'Updating...' : 'Creating...'}
+                    {mode === "edit" ? "Updating..." : "Creating..."}
                   </>
+                ) : mode === "edit" ? (
+                  "Update Event"
                 ) : (
-                  mode === 'edit' ? 'Update Event' : 'Create Event'
+                  "Create Event"
                 )}
               </Button>
             </DialogFooter>

@@ -109,7 +109,7 @@ export async function DELETE(
         });
 
         // Delete the user
-        await tx.user.delete({
+        await tx.users.delete({
           where: { id: conference.userId },
         });
       }
