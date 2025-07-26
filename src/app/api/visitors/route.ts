@@ -14,23 +14,41 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 
 
-// Schema with conditional validation
-const visitorRegistrationSchema = baseVisitorSchema.refine((data) => {
-  // If attendee type is STUDENT_ACADEMIC, professional info is optional
-  if (data.attendeeType === AttendeeType.STUDENT_ACADEMIC) {
-    return true; // All professional fields are optional for students
-  }
-
-  // For non-students, require professional information
-  return (
-    data.jobTitle &&
-    data.companyName &&
-    data.industry
-  );
-}, {
-  message: "Professional information is required for non-student attendees",
-  path: ["jobTitle"], // This will show the error on jobTitle field
-});
+// Schema with conditional validation - matching client-side validation
+const visitorRegistrationSchema = baseVisitorSchema
+  .refine((data) => {
+    // If attendee type is STUDENT_ACADEMIC, job title is optional
+    if (data.attendeeType === AttendeeType.STUDENT_ACADEMIC) {
+      return true;
+    }
+    // For non-students, require job title
+    return data.jobTitle && data.jobTitle.trim().length > 0;
+  }, {
+    message: "Job title is required for non-student attendees",
+    path: ["jobTitle"],
+  })
+  .refine((data) => {
+    // If attendee type is STUDENT_ACADEMIC, company name is optional
+    if (data.attendeeType === AttendeeType.STUDENT_ACADEMIC) {
+      return true;
+    }
+    // For non-students, require company name
+    return data.companyName && data.companyName.trim().length > 0;
+  }, {
+    message: "Company/School name is required for non-student attendees",
+    path: ["companyName"],
+  })
+  .refine((data) => {
+    // If attendee type is STUDENT_ACADEMIC, industry is optional
+    if (data.attendeeType === AttendeeType.STUDENT_ACADEMIC) {
+      return true;
+    }
+    // For non-students, require industry
+    return data.industry;
+  }, {
+    message: "Industry is required for non-student attendees",
+    path: ["industry"],
+  });
 
 // Helper function to upload base64 image to Supabase Storage
 async function uploadImageToSupabase(base64Image: string, userId: string): Promise<string> {
@@ -69,6 +87,87 @@ async function uploadImageToSupabase(base64Image: string, userId: string): Promi
   } catch (error) {
     console.error('Image upload error:', error);
     throw error;
+  }
+}
+
+// GET - Fetch all visitors with full user details
+export async function GET(request: NextRequest) {
+  try {
+    console.log("API: Fetching all visitors");
+
+    const visitors = await prisma.visitors.findMany({
+      include: {
+        user: {
+          include: {
+            user_details: true,
+            user_accounts: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Transform data to flatten the structure for easier consumption
+    const transformedVisitors = visitors.map(visitor => ({
+      // Visitor specific data
+      id: visitor.id,
+      jobTitle: visitor.jobTitle,
+      companyName: visitor.companyName,
+      industry: visitor.industry,
+      industryOthers: visitor.industryOthers,
+      companyAddress: visitor.companyAddress,
+      companyWebsite: visitor.companyWebsite,
+      businessEmail: visitor.businessEmail,
+      attendingDays: visitor.attendingDays,
+      eventParts: visitor.eventParts,
+      attendeeType: visitor.attendeeType,
+      interestAreas: visitor.interestAreas,
+      receiveUpdates: visitor.receiveUpdates,
+      inviteToFutureEvents: visitor.inviteToFutureEvents,
+      specialAssistance: visitor.specialAssistance,
+      emergencyContactPerson: visitor.emergencyContactPerson,
+      emergencyContactNumber: visitor.emergencyContactNumber,
+      dataPrivacyConsent: visitor.dataPrivacyConsent,
+      hearAboutEvent: visitor.hearAboutEvent,
+      hearAboutOthers: visitor.hearAboutOthers,
+      createdAt: visitor.createdAt,
+      updatedAt: visitor.updatedAt,
+
+      // User details
+      userId: visitor.user?.id,
+      firstName: visitor.user?.user_details?.[0]?.firstName,
+      lastName: visitor.user?.user_details?.[0]?.lastName,
+      middleName: visitor.user?.user_details?.[0]?.middleName,
+      suffix: visitor.user?.user_details?.[0]?.suffix,
+      preferredName: visitor.user?.user_details?.[0]?.preferredName,
+      faceScannedUrl: visitor.user?.user_details?.[0]?.faceScannedUrl,
+      gender: visitor.user?.user_details?.[0]?.gender,
+      genderOthers: visitor.user?.user_details?.[0]?.genderOthers,
+      ageBracket: visitor.user?.user_details?.[0]?.ageBracket,
+      nationality: visitor.user?.user_details?.[0]?.nationality,
+
+      // User account details
+      email: visitor.user?.user_accounts?.[0]?.email,
+      mobileNumber: visitor.user?.user_accounts?.[0]?.mobileNumber,
+      landline: visitor.user?.user_accounts?.[0]?.landline,
+      mailingAddress: visitor.user?.user_accounts?.[0]?.mailingAddress,
+      status: visitor.user?.user_accounts?.[0]?.status,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: transformedVisitors,
+      count: transformedVisitors.length
+    });
+
+  } catch (error) {
+    console.error('API: Error fetching visitors:', error);
+    return NextResponse.json({
+      success: false,
+      message: "Failed to fetch visitors",
+    }, { status: 500 });
   }
 }
 
@@ -130,9 +229,9 @@ export async function POST(request: NextRequest) {
           companyAddress: validatedData.companyAddress || null,
           companyWebsite: validatedData.companyWebsite || null,
           businessEmail: validatedData.businessEmail || null,
-          attendingDays: validatedData.attendingDays,
           eventParts: validatedData.eventParts,
           attendeeType: validatedData.attendeeType,
+          attendingDays: validatedData.attendingDays,
           interestAreas: validatedData.interestAreas,
           receiveUpdates: validatedData.receiveUpdates,
           inviteToFutureEvents: validatedData.inviteToFutureEvents,
@@ -195,7 +294,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         message: "Validation failed",
-        errors: error,
+        errors: error.issues.map(err => ({
+          path: err.path,
+          message: err.message
+        })),
       }, { status: 400 });
     }
 

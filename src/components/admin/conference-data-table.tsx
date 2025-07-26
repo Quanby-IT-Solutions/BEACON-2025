@@ -26,6 +26,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  FileDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+import { PaymentMode, PaymentStatus } from "@prisma/client";
+import * as XLSX from "xlsx";
 
 // Types
 interface ConferenceData {
@@ -117,18 +120,15 @@ interface ConferenceData {
     dataUsageConsent: boolean;
   };
   paymentInfo: {
-    totalPaymentAmount: number | null;
-    customPaymentAmount: string | null;
-    requiresPayment: boolean;
-    paymentToken: string | null;
-    paymentTokenExpiry: string | null;
-    paymentStatus: string;
+    totalAmount: number | null;
+    referenceNumber: string | null;
+    receiptImageUrl: string | null;
+    notes: string | null;
     paymentMode: string | null;
+    paymentStatus: string;
+    requiresPayment: boolean;
     isPaid: boolean;
     paymentConfirmedAt: string | null;
-    paymentConfirmedBy: string | null;
-    paymongoCheckoutId: string | null;
-    transactionId: string | null;
   };
   selectedEvents: Array<{
     id: string;
@@ -157,8 +157,112 @@ export function ConferenceDataTable({
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>({
+      middleName: false,
+      suffix: false,
+      gender: false,
+      ageBracket: false,
+      nationality: false,
+      email: false,
+      mobile: false,
+      landline: false,
+      mailingAddress: false,
+      jobTitle: false,
+      industry: false,
+      tmlCode: false,
+      totalAmount: false,
+      paymentMode: true,
+    });
   const [rowSelection, setRowSelection] = React.useState({});
+  const [isExporting, setIsExporting] = React.useState(false);
+
+  const exportToExcel = async () => {
+    try {
+      setIsExporting(true);
+
+      // Prepare data for Excel export
+      const exportData = data.map((conference, index) => ({
+        "No.": index + 1,
+        "Full Name": `${conference.personalInfo.firstName} ${
+          conference.personalInfo.middleName || ""
+        } ${conference.personalInfo.lastName} ${
+          conference.personalInfo.suffix || ""
+        }`
+          .replace(/\s+/g, " ")
+          .trim(),
+        "Preferred Name": conference.personalInfo.preferredName || "",
+        Gender: conference.personalInfo.gender,
+        "Gender Others": conference.personalInfo.genderOthers || "",
+        "Age Bracket": conference.personalInfo.ageBracket,
+        Nationality: conference.personalInfo.nationality,
+        Email: conference.contactInfo.email,
+        "Mobile Number": conference.contactInfo.mobileNumber,
+        Landline: conference.contactInfo.landline || "",
+        "Mailing Address": conference.contactInfo.mailingAddress || "",
+        Status: conference.contactInfo.status,
+        "Job Title": conference.conferenceInfo.jobTitle || "",
+        "Company Name": conference.conferenceInfo.companyName || "",
+        Industry: conference.conferenceInfo.industry || "",
+        "Company Address": conference.conferenceInfo.companyAddress || "",
+        "Company Website": conference.conferenceInfo.companyWebsite || "",
+        "Maritime League Member":
+          conference.conferenceInfo.isMaritimeLeagueMember,
+        "TML Member Code": conference.conferenceInfo.tmlMemberCode || "",
+        "Interest Areas": Array.isArray(conference.conferenceInfo.interestAreas)
+          ? conference.conferenceInfo.interestAreas.join(", ")
+          : "",
+        "Other Interests": conference.conferenceInfo.otherInterests || "",
+        "Receive Event Invites": conference.conferenceInfo.receiveEventInvites
+          ? "Yes"
+          : "No",
+        "Email Certificate": conference.conferenceInfo.emailCertificate
+          ? "Yes"
+          : "No",
+        "Data Usage Consent": conference.conferenceInfo.dataUsageConsent
+          ? "Yes"
+          : "No",
+        "Selected Events": conference.selectedEvents
+          .map((event) => event.name)
+          .join(", "),
+        "Total Payment Amount": `₱${Number(
+          conference.paymentInfo.totalAmount || 0
+        ).toLocaleString()}`,
+        "Payment Status": conference.paymentInfo.paymentStatus,
+        "Payment Mode": conference.paymentInfo.paymentMode || "",
+        "Transaction Reference": conference.paymentInfo.referenceNumber || "",
+        "Receipt Image URL": conference.paymentInfo.receiptImageUrl || "",
+        "Payment Notes": conference.paymentInfo.notes || "",
+        "Is Paid": conference.paymentInfo.isPaid ? "Yes" : "No",
+        "Requires Payment": conference.paymentInfo.requiresPayment
+          ? "Yes"
+          : "No",
+        "Registration Date": formatDate(conference.createdAt),
+      }));
+
+      // Create workbook and worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Conference Registrations");
+
+      // Auto-size columns
+      const colWidths = Object.keys(exportData[0] || {}).map((key) => ({
+        wch: Math.max(key.length, 15),
+      }));
+      ws["!cols"] = colWidths;
+
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split("T")[0];
+      const filename = `BEACON_2025_Conference_Registrations_${currentDate}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -184,15 +288,15 @@ export function ConferenceDataTable({
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
 
-  const getPaymentStatusBadge = (isPaid: boolean, paymentStatus: string) => {
-    if (isPaid) {
-      return (
-        <Badge variant="default" className="bg-green-100 text-green-800">
-          <CheckCircle className="mr-1 h-3 w-3" />
-          Paid
-        </Badge>
-      );
-    }
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    // if (isPaid) {
+    //   return (
+    //     <Badge variant="default" className="bg-green-100 text-green-800">
+    //       <CheckCircle className="mr-1 h-3 w-3" />
+    //       Paid
+    //     </Badge>
+    //   );
+    // }
 
     const statusMap: Record<
       string,
@@ -332,6 +436,193 @@ export function ConferenceDataTable({
       ),
     },
     {
+      accessorKey: "personalInfo.middleName",
+      id: "middleName",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Middle Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.personalInfo.middleName || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.suffix",
+      id: "suffix",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Suffix
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.personalInfo.suffix || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.gender",
+      id: "gender",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Gender
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.gender}</div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.ageBracket",
+      id: "ageBracket",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Age Bracket
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.ageBracket}</div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.nationality",
+      id: "nationality",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Nationality
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.nationality}</div>
+      ),
+    },
+    {
+      accessorKey: "contactInfo.mobileNumber",
+      id: "mobile",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            <Phone className="mr-2 h-4 w-4" />
+            Mobile
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="flex items-center">
+          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">
+            {row.original.contactInfo.mobileNumber}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "contactInfo.landline",
+      id: "landline",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Landline
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.contactInfo.landline || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "contactInfo.mailingAddress",
+      id: "mailingAddress",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Mailing Address
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm max-w-xs truncate">
+          {row.original.contactInfo.mailingAddress || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "conferenceInfo.jobTitle",
+      id: "jobTitle",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Job Title
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.conferenceInfo.jobTitle || "N/A"}
+        </div>
+      ),
+    },
+    {
       accessorKey: "conferenceInfo.companyName",
       id: "company",
       header: ({ column }) => {
@@ -349,6 +640,48 @@ export function ConferenceDataTable({
       cell: ({ row }) => (
         <div className="text-sm">
           {row.original.conferenceInfo.companyName || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "conferenceInfo.industry",
+      id: "industry",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Industry
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.conferenceInfo.industry || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "conferenceInfo.tmlMemberCode",
+      id: "tmlCode",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            TML Code
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm font-mono">
+          {row.original.conferenceInfo.tmlMemberCode || "N/A"}
         </div>
       ),
     },
@@ -371,6 +704,48 @@ export function ConferenceDataTable({
         getMembershipBadge(row.original.conferenceInfo.isMaritimeLeagueMember),
     },
     {
+      accessorKey: "paymentInfo.totalAmount",
+      id: "totalAmount",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Total Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm font-medium">
+          ₱{Number(row.original.paymentInfo.totalAmount || 0).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "paymentInfo.paymentMode",
+      id: "paymentMode",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Payment Mode
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.paymentInfo.paymentMode || "N/A"}
+        </div>
+      ),
+    },
+    {
       accessorKey: "paymentInfo.isPaid",
       id: "payment",
       header: ({ column }) => {
@@ -387,10 +762,7 @@ export function ConferenceDataTable({
         );
       },
       cell: ({ row }) =>
-        getPaymentStatusBadge(
-          row.original.paymentInfo.isPaid,
-          row.original.paymentInfo.paymentStatus
-        ),
+        getPaymentStatusBadge(row.original.paymentInfo.paymentStatus),
     },
     {
       accessorKey: "createdAt",
@@ -625,7 +997,6 @@ export function ConferenceDataTable({
                           <label className="font-medium">Payment Status:</label>
                           <p>
                             {getPaymentStatusBadge(
-                              conference.paymentInfo.isPaid,
                               conference.paymentInfo.paymentStatus
                             )}
                           </p>
@@ -635,7 +1006,7 @@ export function ConferenceDataTable({
                           <p>
                             ₱
                             {Number(
-                              conference.paymentInfo.totalPaymentAmount || 0
+                              conference.paymentInfo.totalAmount || 0
                             ).toLocaleString()}
                           </p>
                         </div>
@@ -643,16 +1014,40 @@ export function ConferenceDataTable({
                           <label className="font-medium">Payment Mode:</label>
                           <p>{conference.paymentInfo.paymentMode || "N/A"}</p>
                         </div>
+
                         <div>
-                          <label className="font-medium">Confirmed At:</label>
-                          <p>
-                            {conference.paymentInfo.paymentConfirmedAt
-                              ? formatDate(
-                                  conference.paymentInfo.paymentConfirmedAt
-                                )
-                              : "N/A"}
+                          <label className="font-medium">
+                            Transaction Reference:
+                          </label>
+                          <p className="font-mono text-xs">
+                            {conference.paymentInfo.referenceNumber || "N/A"}
                           </p>
                         </div>
+
+                        {conference?.paymentInfo?.receiptImageUrl && (
+                          <div className="col-span-2">
+                            <label className="font-medium">Receipt:</label>
+                            <div className="mt-2">
+                              <a
+                                href={conference.paymentInfo?.receiptImageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Receipt
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                        {conference.paymentInfo.notes && (
+                          <div className="col-span-2">
+                            <label className="font-medium">Notes:</label>
+                            <p className="text-sm bg-gray-50 p-2 rounded mt-1">
+                              {conference.paymentInfo.notes}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -751,41 +1146,100 @@ export function ConferenceDataTable({
           }
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                const columnLabels: Record<string, string> = {
-                  name: "Name",
-                  email: "Email",
-                  company: "Company",
-                  membership: "Membership",
-                  payment: "Payment",
-                  registered: "Registered",
-                };
+        <div className="ml-auto flex items-center gap-2">
+          {/* Export Button */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" disabled={data.length === 0}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export to Excel
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Export Conference Registrations
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will export all {data.length} registered conference
+                  attendees to an Excel file. The file will include all personal
+                  information, contact details, payment status, and selected
+                  events.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={exportToExcel}
+                  disabled={isExporting}
+                  className="bg-green-600 text-white hover:bg-green-700"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Export All Registered Conference
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {columnLabels[column.id] || column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Columns Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  const columnLabels: Record<string, string> = {
+                    name: "Name",
+                    email: "Email",
+                    middleName: "Middle Name",
+                    suffix: "Suffix",
+                    gender: "Gender",
+                    ageBracket: "Age Bracket",
+                    nationality: "Nationality",
+                    mobile: "Mobile",
+                    landline: "Landline",
+                    mailingAddress: "Mailing Address",
+                    jobTitle: "Job Title",
+                    company: "Company",
+                    industry: "Industry",
+                    tmlCode: "TML Code",
+                    membership: "Membership",
+                    totalAmount: "Total Amount",
+                    paymentMode: "Payment Mode",
+                    payment: "Payment",
+                    registered: "Registered",
+                  };
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {columnLabels[column.id] || column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

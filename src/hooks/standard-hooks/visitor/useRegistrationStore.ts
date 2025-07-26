@@ -5,17 +5,25 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { RegistrationFormData } from '@/types/visitor/registration';
 
+interface SelectedEvent {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface RegistrationStore {
   // Form state
   formData: Partial<RegistrationFormData>;
   currentStep: number;
   isFormDirty: boolean;
+  selectedEvents: SelectedEvent[];
 
   // Actions
   updateFormData: (data: Partial<RegistrationFormData>) => void;
   setCurrentStep: (step: number) => void;
   setFormDirty: (dirty: boolean) => void;
   clearFormData: () => void;
+  updateSelectedEvents: (events: SelectedEvent[]) => void;
 
   // Draft saving for better UX
   saveDraft: () => void;
@@ -30,12 +38,15 @@ export const useRegistrationStore = create<RegistrationStore>()(
       currentStep: 0,
       isFormDirty: false,
       hasDraft: false,
+      selectedEvents: [],
 
       updateFormData: (data) =>
         set((state) => ({
           formData: { ...state.formData, ...data },
           isFormDirty: true,
         })),
+
+      updateSelectedEvents: (events) => set({ selectedEvents: events }),
 
       setCurrentStep: (step) => set({ currentStep: step }),
 
@@ -47,6 +58,7 @@ export const useRegistrationStore = create<RegistrationStore>()(
           isFormDirty: false,
           hasDraft: false,
           currentStep: 0,
+          selectedEvents: [],
         }),
 
       saveDraft: () => {

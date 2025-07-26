@@ -466,7 +466,8 @@ export default function ConferenceRegistrationSinglePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col">
+      <div className="container mx-auto lg:p-4 p-2 max-w-5xl flex-1 flex flex-col gap-6">
+        <img src="/images/beacon-reg.png" className="rounded-lg" alt="" />
         <Card className="relative flex-1 flex flex-col h-full lg:p-12 p-2">
           <CardHeader className="shrink-0 p-0">
             <CardTitle className="text-2xl uppercase">

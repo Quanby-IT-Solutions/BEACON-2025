@@ -16,7 +16,7 @@ export const baseVisitorSchema = z.object({
   ageBracket: z.nativeEnum(AgeBracket),
   nationality: z.string().min(1, "Nationality is required"),
   faceScannedUrl: z.string().min(1, "Face capture is required"),
-  mailingAddress:z.string().optional(),
+  mailingAddress: z.string().optional(),
 
   // Account Details (user_accounts)
   email: z.string().email("Invalid email format"),
@@ -33,7 +33,7 @@ export const baseVisitorSchema = z.object({
   businessEmail: z.string().email().optional().nullable().or(z.literal("")),
 
   // Interests & Preferences
-  attendingDays: z.array(z.nativeEnum(EventDay)).min(1, "Select at least one attending day"),
+  attendingDays: z.array(z.string()).min(1, "Select at least one attending day"),
   eventParts: z.array(z.string()).min(1, "Select at least one event part"),
   attendeeType: z.nativeEnum(AttendeeType),
   interestAreas: z.array(z.nativeEnum(InterestArea)).min(1, "Select at least one interest area"),
@@ -113,7 +113,7 @@ export const defaultRegistrationValues: Partial<RegistrationFormData> = {
   companyAddress: "123 Tech Street",
   companyWebsite: "https://techsolutions.com",
   businessEmail: "business@techsolutions.com",
-  attendingDays: [EventDay.OCT_1],
+  attendingDays: [],
   eventParts: ["EXPO", "CONFERENCE"],
   interestAreas: ["MARITIME_NAVAL_TECH", "SHIPBUILDING_REPAIR"],
   receiveUpdates: false,

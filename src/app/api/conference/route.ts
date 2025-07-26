@@ -529,18 +529,18 @@ export async function POST(request: NextRequest) {
 
         receiptImageUrl = publicData.publicUrl;
 
-        // Update payment record with receipt URL and mark as CONFIRMED
+        // Update payment record with receipt URL but keep as PENDING for admin review
         await prisma.conferencePayment.update({
           where: { id: paymentRecord.id },
           data: {
             receiptImageUrl: receiptImageUrl,
-            paymentStatus: 'CONFIRMED',
-            notes: 'Payment confirmed - Receipt uploaded during registration',
+            paymentStatus: 'PENDING', // Keep as PENDING until admin manually confirms
+            notes: 'Receipt uploaded - Awaiting admin verification',
             updatedAt: new Date()
           }
         });
 
-        console.log("Conference API: Receipt image uploaded and payment confirmed successfully");
+        console.log("Conference API: Receipt image uploaded successfully - awaiting admin verification");
       } catch (receiptError) {
         console.error("Conference API: Receipt image upload failed:", receiptError);
         // Update payment with error note but don't fail the registration

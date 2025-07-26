@@ -67,11 +67,7 @@ enum Industry {
   OTHERS
 }
 
-enum EventDay {
-  SEPT_29
-  SEPT_30
-  OCT_1
-}
+
 
 enum AttendeeType {
   TRADE_VISITOR
@@ -227,7 +223,7 @@ model Visitors {
   businessEmail  String?
 
   // Section 4: Interests & Preferences
-  attendingDays        EventDay[]
+  attendingDays        String[]
   eventParts           String[] // This is a EXPO, CONFERENCE, PHILIPPINE IN-WATER SHIP & BOAT SHOW, BLUE RUNWAY, NETWORKING & AWARDS NIGHT
   attendeeType         AttendeeType
   interestAreas        InterestArea[]

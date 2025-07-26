@@ -125,11 +125,15 @@ export async function GET(request: NextRequest) {
 
       // Payment Information
       paymentInfo: {
-
-        // Conference Payment details
-        paymentStatus: conference.ConferencePayment?.paymentStatus || 'PENDING',
+        totalAmount: conference.ConferencePayment?.totalAmount ? Number(conference.ConferencePayment.totalAmount) : null,
+        referenceNumber: conference.ConferencePayment?.referenceNumber || null,
+        receiptImageUrl: conference.ConferencePayment?.receiptImageUrl || null,
+        notes: conference.ConferencePayment?.notes || null,
         paymentMode: conference.ConferencePayment?.paymentMode || null,
-
+        paymentStatus: conference.ConferencePayment?.paymentStatus || 'PENDING',
+        requiresPayment: conference.isMaritimeLeagueMember === 'NO',
+        isPaid: conference.ConferencePayment?.paymentStatus === 'CONFIRMED',
+        paymentConfirmedAt: conference.ConferencePayment?.updatedAt?.toISOString() || null,
       },
 
       // Selected Events

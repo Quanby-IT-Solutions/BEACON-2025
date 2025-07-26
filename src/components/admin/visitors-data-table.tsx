@@ -145,7 +145,19 @@ export function VisitorsDataTable({
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>({
+      middleName: false,
+      suffix: false,
+      gender: false,
+      ageBracket: false,
+      nationality: false,
+      landline: false,
+      mailingAddress: false,
+      jobTitle: false,
+      industry: false,
+      businessEmail: false,
+      attendeeType: false,
+    });
   const [rowSelection, setRowSelection] = React.useState({});
 
   const formatDate = (dateString: string) => {
@@ -252,6 +264,105 @@ export function VisitorsDataTable({
       ),
     },
     {
+      accessorKey: "personalInfo.middleName",
+      id: "middleName",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Middle Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.personalInfo.middleName || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.suffix",
+      id: "suffix",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Suffix
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.personalInfo.suffix || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.gender",
+      id: "gender",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Gender
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.gender}</div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.ageBracket",
+      id: "ageBracket",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Age Bracket
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.ageBracket}</div>
+      ),
+    },
+    {
+      accessorKey: "personalInfo.nationality",
+      id: "nationality",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Nationality
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.personalInfo.nationality}</div>
+      ),
+    },
+    {
       accessorKey: "contactInfo.mobileNumber",
       id: "mobile",
       header: ({ column }) => {
@@ -277,6 +388,67 @@ export function VisitorsDataTable({
       ),
     },
     {
+      accessorKey: "contactInfo.landline",
+      id: "landline",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Landline
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.contactInfo.landline || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "contactInfo.mailingAddress",
+      id: "mailingAddress",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Mailing Address
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm max-w-xs truncate">
+          {row.original.contactInfo.mailingAddress || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "professionalInfo.jobTitle",
+      id: "jobTitle",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Job Title
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.professionalInfo.jobTitle}</div>
+      ),
+    },
+    {
       accessorKey: "professionalInfo.companyName",
       id: "company",
       header: ({ column }) => {
@@ -295,6 +467,65 @@ export function VisitorsDataTable({
         <div className="text-sm">
           {row.original.professionalInfo.companyName}
         </div>
+      ),
+    },
+    {
+      accessorKey: "professionalInfo.industry",
+      id: "industry",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Industry
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.professionalInfo.industry}</div>
+      ),
+    },
+    {
+      accessorKey: "professionalInfo.businessEmail",
+      id: "businessEmail",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Business Email
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.original.professionalInfo.businessEmail || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "eventInfo.attendeeType",
+      id: "attendeeType",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 lg:px-3"
+          >
+            Attendee Type
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.eventInfo.attendeeType}</div>
       ),
     },
     {
@@ -437,6 +668,12 @@ export function VisitorsDataTable({
                           <p>{visitor.contactInfo.landline || "N/A"}</p>
                         </div>
                         <div>
+                          <label className="font-medium">
+                            Mailing Address:
+                          </label>
+                          <p>{visitor.contactInfo.mailingAddress || "N/A"}</p>
+                        </div>
+                        <div>
                           <label className="font-medium">Status:</label>
                           <p>{getStatusBadge(visitor.contactInfo.status)}</p>
                         </div>
@@ -463,6 +700,33 @@ export function VisitorsDataTable({
                             {visitor.professionalInfo.industry}{" "}
                             {visitor.professionalInfo.industryOthers &&
                               `(${visitor.professionalInfo.industryOthers})`}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">
+                            Company Address:
+                          </label>
+                          <p>
+                            {visitor.professionalInfo.companyAddress || "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">
+                            Company Website:
+                          </label>
+                          <p>
+                            {visitor.professionalInfo.companyWebsite ? (
+                              <a
+                                href={visitor.professionalInfo.companyWebsite}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {visitor.professionalInfo.companyWebsite}
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
                           </p>
                         </div>
                         <div>
@@ -509,8 +773,84 @@ export function VisitorsDataTable({
                           <label className="font-medium">Contact Number:</label>
                           <p>{visitor.emergencyInfo.emergencyContactNumber}</p>
                         </div>
+                        <div>
+                          <label className="font-medium">
+                            Special Assistance:
+                          </label>
+                          <p>
+                            {visitor.emergencyInfo.specialAssistance || "None"}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Consent & Marketing */}
+                    <div>
+                      <h3 className="font-semibold mb-3">
+                        Consent & Marketing
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <label className="font-medium">
+                            Data Privacy Consent:
+                          </label>
+                          <p>
+                            {visitor.consentInfo.dataPrivacyConsent
+                              ? "Yes"
+                              : "No"}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">
+                            Receive Updates:
+                          </label>
+                          <p>
+                            {visitor.eventInfo.receiveUpdates ? "Yes" : "No"}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">
+                            Future Event Invites:
+                          </label>
+                          <p>
+                            {visitor.eventInfo.inviteToFutureEvents
+                              ? "Yes"
+                              : "No"}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">
+                            Heard About Event:
+                          </label>
+                          <p>
+                            {visitor.consentInfo.hearAboutEvent}
+                            {visitor.consentInfo.hearAboutOthers &&
+                              ` (${visitor.consentInfo.hearAboutOthers})`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Face Capture */}
+                    {visitor.personalInfo.faceScannedUrl && (
+                      <div>
+                        <h3 className="font-semibold mb-3">Face Capture</h3>
+                        <div className="text-sm">
+                          <label className="font-medium">Face Scan:</label>
+                          <div className="mt-2">
+                            <a
+                              href={visitor.personalInfo.faceScannedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Face Scan
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
@@ -610,7 +950,7 @@ export function VisitorsDataTable({
               Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="max-h-56">
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
@@ -618,8 +958,19 @@ export function VisitorsDataTable({
                 const columnLabels: Record<string, string> = {
                   name: "Name",
                   email: "Email",
+                  middleName: "Middle Name",
+                  suffix: "Suffix",
+                  gender: "Gender",
+                  ageBracket: "Age Bracket",
+                  nationality: "Nationality",
                   mobile: "Mobile",
+                  landline: "Landline",
+                  mailingAddress: "Mailing Address",
+                  jobTitle: "Job Title",
                   company: "Company",
+                  industry: "Industry",
+                  businessEmail: "Business Email",
+                  attendeeType: "Attendee Type",
                   status: "Status",
                   registered: "Registered",
                 };

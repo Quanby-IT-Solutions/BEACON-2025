@@ -40,18 +40,15 @@ interface ConferenceData {
     dataUsageConsent: boolean;
   };
   paymentInfo: {
-    totalPaymentAmount: number | null;
-    customPaymentAmount: string | null;
-    requiresPayment: boolean;
-    paymentToken: string | null;
-    paymentTokenExpiry: string | null;
-    paymentStatus: string;
+    totalAmount: number | null;
+    referenceNumber: string | null;
+    receiptImageUrl: string | null;
+    notes: string | null;
     paymentMode: string | null;
+    paymentStatus: string;
+    requiresPayment: boolean;
     isPaid: boolean;
     paymentConfirmedAt: string | null;
-    paymentConfirmedBy: string | null;
-    paymongoCheckoutId: string | null;
-    transactionId: string | null;
   };
   selectedEvents: Array<{
     id: string;
