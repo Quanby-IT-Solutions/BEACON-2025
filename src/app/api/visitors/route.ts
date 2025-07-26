@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
-import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea, PrismaClient } from '@prisma/client';
+import { AgeBracket, AttendeeType, Gender, HearAboutEvent, Industry, InterestArea, PrismaClient } from '@prisma/client';
 import { baseVisitorSchema } from '@/types/visitor/registration';
 
 

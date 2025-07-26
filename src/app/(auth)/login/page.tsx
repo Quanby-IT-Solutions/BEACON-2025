@@ -22,22 +22,56 @@ function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAdminStore();
+  const { isAuthenticated, isSessionValid, clearSession } = useAdminStore();
   const adminLogin = useAdminLogin();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   // Get return URL from query params, default to /admin
   const returnUrl = searchParams.get('returnUrl') ? decodeURIComponent(searchParams.get('returnUrl')!) : '/admin';
 
-  // Redirect if already authenticated
+  // Check authentication state and handle expired sessions
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push(returnUrl);
-    }
-  }, [isAuthenticated, router, returnUrl]);
+    const checkAuthState = () => {
+      console.log('🔍 Login: Checking authentication state...', {
+        isAuthenticated,
+        isSessionValid: isSessionValid(),
+      });
 
-  // Don't render the form if already authenticated
-  if (isAuthenticated) {
-    return null;
+      setTimeout(() => {
+        const sessionValid = isSessionValid();
+        
+        // If authenticated with valid session, redirect
+        if (isAuthenticated && sessionValid) {
+          console.log('✅ Login: Already authenticated, redirecting');
+          router.push(returnUrl);
+        } 
+        // If authenticated but session invalid, clear and stay on login
+        else if (isAuthenticated && !sessionValid) {
+          console.log('🔒 Login: Session expired, clearing auth state');
+          clearSession();
+          setIsCheckingAuth(false);
+        }
+        // Not authenticated, show login form
+        else {
+          console.log('📝 Login: Not authenticated, showing login form');
+          setIsCheckingAuth(false);
+        }
+      }, 100);
+    };
+
+    checkAuthState();
+  }, [isAuthenticated, isSessionValid, router, returnUrl, clearSession]);
+
+  // Show loading while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Checking authentication...</span>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +157,23 @@ function AdminLoginForm() {
                 "Sign In"
               )}
             </Button>
+
+            {/* Debug button for development */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-xs"
+                onClick={() => {
+                  console.log('🧹 Debug: Force clearing all auth data');
+                  clearSession();
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+              >
+                🧹 Clear All Auth Data (Debug)
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>

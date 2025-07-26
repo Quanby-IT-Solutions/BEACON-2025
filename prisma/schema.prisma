@@ -167,7 +167,8 @@ model Users {
   Visitors      Visitors[]
   Conferences   Conference[]
 
-  CodeDistribution CodeDistribution[]
+  CodeDistribution       CodeDistribution[]
+  ExhibitorRegistrations exhibitor_registrations[]
 
   @@map("users")
 }
@@ -372,4 +373,103 @@ model CodeDistribution {
   user Users? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("code_distribution")
+}
+
+model exhibitor_registrations {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // 👇 Foreign key relation to Users
+  userId String
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // 🔷 SECTION 1: Company Information
+  companyName              String
+  businessRegistrationName String?
+  industrySector           IndustrySector
+  industrySectorOthers     String?
+  companyAddress           String?
+  companyWebsite           String?
+  companyProfile           String?
+  //Section 2 is the user_details
+  //section 3 is the user_accounts
+
+  // 🔷 SECTION 4: Exhibition Package & Preferences
+  participationTypes ParticipationType[]
+  boothSize          BoothSize?
+  boothDescription   String
+  launchNewProduct   YesNoMaybe?
+  requireDemoArea    YesNoMaybe?
+
+  // 🔷 SECTION 5: Logistics & Marketing Coordination
+  bringLargeEquipment      YesNoMaybe?
+  haveMarketingCollaterals String? //Yes have collaterals, No, need assistance, working on it
+  logoUrl                  String?
+
+  // 🔷 SECTION 7: Company Objectives & Collaboration
+  goals              GoalType[]
+  goalsOthers        String?
+  exploreSponsorship YesNoMaybe?
+
+  // 🔷 SECTION 7: Confirmation & Next Steps
+  confirmIntent      ConfirmIntent
+  letterOfIntentUrl  String?
+  additionalComments String?
+
+  @@map("exhibitor_registrations")
+}
+
+// 🔷 ENUMS
+enum IndustrySector {
+  SHIPBUILDING_BOATBUILDING
+  MARITIME_EQUIPMENT_TECHNOLOGY
+  NAVAL_DEFENSE
+  PORT_LOGISTICS
+  MARINE_TOURISM
+  RENEWABLE_GREEN
+  FASHION_LIFESTYLE
+  EDUCATION_TRAINING
+  OTHERS
+}
+
+enum ParticipationType {
+  INDOOR_BOOTH
+  RAW_SPACE
+  IN_WATER_DISPLAY
+  BLUE_RUNWAY
+  PRODUCT_LAUNCH
+  CO_BRANDING
+}
+
+enum BoothSize {
+  SIZE_2X2
+  SIZE_2X3
+  SIZE_3X3
+  SIZE_6X3
+  RAW_SPACE_MIN_18
+  CUSTOM_SETUP
+}
+
+enum YesNoMaybe {
+  YES
+  NO
+  MAYBE
+}
+
+enum GoalType {
+  SHOWCASE_PRODUCTS
+  MEET_BUYERS
+  PROMOTE_BRAND
+  LAUNCH_NEW_PRODUCT
+  ENGAGE_GOV_AGENCIES
+  JOIN_BLUE_ECONOMY
+  RECRUIT_TALENT
+  OTHERS
+}
+
+enum ConfirmIntent {
+  YES_RESERVE
+  TENTATIVE
+  NO_EXPLORING
 }

@@ -4,6 +4,7 @@ import { useSupabaseRealtime } from "@/providers/SupabaseRealtimeProvider";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { useRealtimeWithFallback } from "./useRealtimeWithFallback";
 
 interface VisitorData {
   id: string;
@@ -92,144 +93,19 @@ export const useAdminVisitors = () => {
   });
 };
 
-// Realtime hook with direct Supabase subscriptions
+// Enhanced realtime hook with fallback mechanism
 export const useAdminVisitorsRealtime = () => {
   const { sessionToken, isAuthenticated } = useAdminStore();
-  const queryClient = useQueryClient();
   
-  // Base query for API data
-  const query = useQuery({
+  return useRealtimeWithFallback({
     queryKey: ['admin-visitors'],
-    queryFn: () => fetchVisitors(sessionToken!),
+    fetchFunction: () => fetchVisitors(sessionToken!),
     enabled: isAuthenticated && !!sessionToken,
     staleTime: 1000 * 60 * 5,
-    retry: 1,
+    tablesToWatch: ['visitors', 'user_details', 'user_accounts', 'visitor_events'],
+    enableFallback: true,
+    fallbackInterval: 30000, // 30 seconds
   });
-
-  // Realtime subscription callback
-  const invalidateQuery = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['admin-visitors'] });
-  }, [queryClient]);
-
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!isAuthenticated || !sessionToken) {
-      console.log('❌ Visitors realtime not initialized: authentication required');
-      return;
-    }
-
-    console.log('🚀 Setting up realtime subscription for visitors...');
-
-    // Create the realtime channel with unique name to avoid conflicts
-    const channelName = `admin-visitors-${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'visitors'
-        },
-        (payload) => {
-          console.log('📡 Visitors realtime change:', payload);
-          
-          // Show appropriate toast notification
-          switch (payload.eventType) {
-            case 'INSERT':
-              toast.success('🎉 New visitor registration received!');
-              break;
-            case 'UPDATE':
-              toast.info('📝 Visitor registration updated');
-              break;
-            case 'DELETE':
-              toast.info('🗑️ Visitor registration removed');
-              break;
-          }
-          
-          // Add small delay to ensure data consistency
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_details'
-        },
-        (payload) => {
-          console.log('👤 User details realtime change:', payload);
-          // Refresh visitors data when user details change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_accounts'
-        },
-        (payload) => {
-          console.log('📧 User accounts realtime change:', payload);
-          // Refresh visitors data when user accounts change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'visitor_events'
-        },
-        (payload) => {
-          console.log('📅 Visitor events realtime change:', payload);
-          // Refresh visitors data when visitor events change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Visitors realtime subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to visitors realtime updates');
-          toast.success('🔴 Visitor realtime monitoring active!');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Visitors realtime subscription error');
-          toast.error('⚠️ Visitor realtime connection failed');
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Visitors realtime subscription timed out');
-          toast.error('⏰ Visitor realtime connection timeout');
-        } else if (status === 'CLOSED') {
-          console.log('🔒 Visitors realtime subscription closed');
-        }
-      });
-
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('🧹 Cleaning up visitors realtime subscription...');
-      try {
-        channel.unsubscribe();
-        console.log('✅ Visitors realtime subscription cleaned up successfully');
-      } catch (error) {
-        console.error('❌ Error cleaning up visitors realtime subscription:', error);
-      }
-    };
-  }, [isAuthenticated, sessionToken, invalidateQuery]);
-
-  return {
-    ...query,
-    isRealtimeEnabled: true,
-  };
 };
 
 const deleteVisitor = async (visitorId: string, token: string): Promise<{ success: boolean; message: string }> => {

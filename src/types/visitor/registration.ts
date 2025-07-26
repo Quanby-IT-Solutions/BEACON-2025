@@ -1,5 +1,5 @@
 
-import { AgeBracket, AttendeeType, EventDay, Gender, HearAboutEvent, Industry, InterestArea } from "@prisma/client";
+import { AgeBracket, AttendeeType, Gender, HearAboutEvent, Industry, InterestArea } from "@prisma/client";
 import { z } from "zod";
 
 

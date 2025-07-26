@@ -19,13 +19,14 @@ const visitorEventSchema = z.object({
 // GET - Retrieve single visitor event by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id } = await context.params
+
 
     const visitorEvent = await prisma.visitorEvents.findUnique({
-      where: { id: eventId }
+      where: { id: id }
     });
 
     if (!visitorEvent) {
@@ -54,10 +55,10 @@ export async function GET(
 // PUT - Update visitor event
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await context.params;
     const body = await request.json();
 
     // Validate update data with partial schema
@@ -96,10 +97,10 @@ export async function PUT(
 // DELETE - Remove visitor event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await context.params;
 
     await prisma.visitorEvents.delete({
       where: { id: eventId }

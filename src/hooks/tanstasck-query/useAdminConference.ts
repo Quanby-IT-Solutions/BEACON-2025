@@ -4,6 +4,7 @@ import { useSupabaseRealtime } from "@/providers/SupabaseRealtimeProvider";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { useRealtimeWithFallback } from "./useRealtimeWithFallback";
 
 interface ConferenceData {
   id: string;
@@ -98,179 +99,19 @@ export const useAdminConferences = () => {
   });
 };
 
-// Realtime hook with direct Supabase subscriptions
+// Enhanced realtime hook with fallback mechanism
 export const useAdminConferencesRealtime = () => {
   const { sessionToken, isAuthenticated } = useAdminStore();
-  const queryClient = useQueryClient();
   
-  // Base query for API data
-  const query = useQuery({
+  return useRealtimeWithFallback({
     queryKey: ['admin-conferences'],
-    queryFn: () => fetchConferences(sessionToken!),
+    fetchFunction: () => fetchConferences(sessionToken!),
     enabled: isAuthenticated && !!sessionToken,
     staleTime: 1000 * 60 * 5,
-    retry: 1,
+    tablesToWatch: ['conferences', 'conference_payments', 'summary_of_payments', 'user_details', 'user_accounts'],
+    enableFallback: true,
+    fallbackInterval: 30000, // 30 seconds
   });
-
-  // Realtime subscription callback
-  const invalidateQuery = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['admin-conferences'] });
-  }, [queryClient]);
-
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!isAuthenticated || !sessionToken) {
-      console.log('❌ Realtime not initialized: authentication required');
-      return;
-    }
-
-    console.log('🚀 Setting up realtime subscription for conferences...');
-
-    // Create the realtime channel with unique name to avoid conflicts
-    const channelName = `admin-conferences-${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conferences'
-        },
-        (payload) => {
-          console.log('📡 Conferences realtime change:', payload);
-          
-          // Show appropriate toast notification
-          switch (payload.eventType) {
-            case 'INSERT':
-              toast.success('🎉 New conference registration received!');
-              break;
-            case 'UPDATE':
-              toast.info('📝 Conference registration updated');
-              break;
-            case 'DELETE':
-              toast.info('🗑️ Conference registration removed');
-              break;
-          }
-          
-          // Add small delay to ensure data consistency
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conference_payments'
-        },
-        (payload) => {
-          console.log('💳 Conference payments realtime change:', payload);
-          
-          // Show appropriate toast notification for payment changes
-          switch (payload.eventType) {
-            case 'INSERT':
-              toast.success('💰 New conference payment initiated!');
-              break;
-            case 'UPDATE':
-              // Check if payment was confirmed
-              if (payload.new && payload.old && 
-                  !payload.old.isPaid && payload.new.isPaid) {
-                toast.success('✅ Conference payment confirmed!');
-              } else {
-                toast.info('💳 Conference payment updated');
-              }
-              break;
-            case 'DELETE':
-              toast.info('🗑️ Conference payment record removed');
-              break;
-          }
-          
-          // Add small delay to ensure data consistency
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'summary_of_payments'
-        },
-        (payload) => {
-          console.log('📊 Summary of payments realtime change:', payload);
-          // Refresh conferences data when summary of payments change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_details'
-        },
-        (payload) => {
-          console.log('👤 User details realtime change:', payload);
-          // Refresh conferences data when user details change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_accounts'
-        },
-        (payload) => {
-          console.log('📧 User accounts realtime change:', payload);
-          // Refresh conferences data when user accounts change
-          setTimeout(() => {
-            invalidateQuery();
-          }, 100);
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Conferences realtime subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to conferences realtime updates');
-          toast.success('🔴 Conference realtime monitoring active!');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Conference realtime subscription error');
-          toast.error('⚠️ Conference realtime connection failed');
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏰ Conference realtime subscription timed out');
-          toast.error('⏰ Conference realtime connection timeout');
-        } else if (status === 'CLOSED') {
-          console.log('🔒 Conference realtime subscription closed');
-        }
-      });
-
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('🧹 Cleaning up conferences realtime subscription...');
-      try {
-        channel.unsubscribe();
-        console.log('✅ Conferences realtime subscription cleaned up successfully');
-      } catch (error) {
-        console.error('❌ Error cleaning up conferences realtime subscription:', error);
-      }
-    };
-  }, [isAuthenticated, sessionToken, invalidateQuery]);
-
-  return {
-    ...query,
-    isRealtimeEnabled: true,
-  };
 };
 
 const deleteConference = async (conferenceId: string, token: string): Promise<{ success: boolean; message: string }> => {
