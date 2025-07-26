@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -16,6 +17,7 @@ import { Loader2, Users, LogOut } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import {
   useAdminVisitors,
+  useAdminVisitorsRealtime,
   useDeleteVisitor,
 } from "@/hooks/tanstasck-query/useAdminVisitors";
 import { useAdminLogout } from "@/hooks/tanstasck-query/useAdminAuth";
@@ -25,7 +27,9 @@ export default function VisitorsDashboard() {
   const router = useRouter();
   const { currentAdmin } = useAdminStore();
   const logout = useAdminLogout();
-  const { data: visitorsData, isLoading, error, refetch } = useAdminVisitors();
+  
+  // Use the realtime-enabled hook
+  const { data: visitorsData, isLoading, error, refetch, isRealtimeEnabled } = useAdminVisitorsRealtime();
   const deleteVisitor = useDeleteVisitor();
 
 // Authentication is now handled by the layout, so we don't need these checks here
@@ -55,9 +59,20 @@ export default function VisitorsDashboard() {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Registered Visitors
+            {isRealtimeEnabled && (
+              <div className="flex items-center gap-2 ml-auto">
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Live</span>
+              </div>
+            )}
           </CardTitle>
           <CardDescription>
             All visitor registrations for BEACON 2025 event
+            {isRealtimeEnabled && (
+              <span className="text-green-600 ml-2">
+                • Real-time updates enabled
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,10 +103,17 @@ export default function VisitorsDashboard() {
           {visitorsData && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Visitors:{" "}
-                  <span className="font-semibold">{visitorsData.count}</span>
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Visitors:{" "}
+                    <span className="font-semibold">{visitorsData.count}</span>
+                  </p>
+                  {isRealtimeEnabled && (
+                    <p className="text-sm text-green-600">
+                      ⚡ Realtime Active
+                    </p>
+                  )}
+                </div>
                 <Button variant="outline" onClick={() => refetch()}>
                   Refresh
                 </Button>

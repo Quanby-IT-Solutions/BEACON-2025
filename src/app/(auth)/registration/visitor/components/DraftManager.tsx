@@ -1,90 +1,42 @@
-import { useEffect } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { SaveIcon, TrashIcon, DownloadIcon } from "lucide-react";
-import { useRegistrationStore } from "@/stores/registrationStore";
-import { RegistrationFormData } from "@/hooks/standard-hooks/visitor/useRegistrationSchema";
+"use client";
 
-interface DraftManagerProps {
-  form: UseFormReturn<RegistrationFormData>;
-}
+import { Card, CardContent } from "@/components/ui/card";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import {
+  FileWarning,
+  MessageCircleWarning,
+  MessageCircleWarningIcon,
+} from "lucide-react";
 
-export function DraftManager({ form }: DraftManagerProps) {
-  const { 
-    hasDraft, 
-    loadDraft, 
-    clearDraft, 
-    saveDraft, 
-    isFormDirty,
-    updateFormData 
-  } = useRegistrationStore();
-
-  // Auto-save on form changes
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      if (isFormDirty) {
-        updateFormData(values as Partial<RegistrationFormData>);
-        saveDraft();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, updateFormData, saveDraft, isFormDirty]);
-
-  const handleLoadDraft = () => {
-    const draftData = loadDraft();
-    form.reset(draftData as RegistrationFormData);
-  };
-
-  const handleClearDraft = () => {
-    clearDraft();
-    form.reset();
-  };
-
-  const handleManualSave = () => {
-    const currentValues = form.getValues();
-    updateFormData(currentValues);
-    saveDraft();
-  };
-
-  if (!hasDraft) return null;
-
+export function DraftManagerVisitor() {
   return (
-    <Alert className="mb-4">
-      <SaveIcon className="h-4 w-4" />
-      <AlertDescription className="flex items-center justify-between">
-        <span>You have a saved draft from a previous session.</span>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleLoadDraft}
-          >
-            <DownloadIcon className="h-3 w-3 mr-1" />
-            Load Draft
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleManualSave}
-          >
-            <SaveIcon className="h-3 w-3 mr-1" />
-            Save Current
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={handleClearDraft}
-          >
-            <TrashIcon className="h-3 w-3 mr-1" />
-            Clear Draft
-          </Button>
+    <Card className="mb-4 bg-muted">
+      <CardContent>
+        <div className="flex items-start gap-2">
+          <Icon
+            icon="ri:information-line"
+            className="w-6 h-6 min-h-6 min-w-6"
+            width="24"
+            height="24"
+          />
+          <div className="flex flex-col gap-1">
+            <span className="mb-2 font-semibold">No Registration Fees:</span>
+            <ul className="list-disc lg:pl-4">
+              <li className="ml-4">
+                Conference: ₱3,000/day or ₱7,500 for 3 days (includes AM snack,
+                lunch, PM snack, certificate of participation)
+              </li>
+              <li className="ml-4">
+                Blue Runway Fashion Show: ₱2,000 (includes Dinner and free photo
+                souvenir)
+              </li>
+              <li className="ml-4">
+                In-Water Boat Show: FREE, but registration is required for entry
+              </li>
+            </ul>
+          </div>
         </div>
-      </AlertDescription>
-    </Alert>
+      </CardContent>
+    </Card>
   );
 }

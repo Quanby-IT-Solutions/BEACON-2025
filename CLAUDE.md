@@ -4,15 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+### Core Development
 - `npm run dev` - Start development server with Turbopack for fast hot reload
-- `npm run build` - Create production build
+- `npm run build` - Create production build (includes `prisma generate`)
 - `npm run start` - Start production server
-- `npm run lint` - Run ESLint for code quality checks
+- `npm run lint` - Run ESLint for code quality checks (disabled by default)
+
+### Database Operations
 - `npx prisma db push` - Push schema changes to database
 - `npx prisma generate` - Generate Prisma client after schema changes
 - `npx prisma studio` - Open Prisma Studio for database management
+- `npx prisma db seed` - Run database seeding (configured with ts-node)
+
+### Supabase Local Development
 - `npx supabase start` - Start local Supabase development environment
 - `npx supabase stop` - Stop local Supabase services
+
+### Package Management
+- `npm install` - Install dependencies (includes automatic `prisma generate` via postinstall)
 
 ## Project Architecture
 
@@ -50,11 +59,17 @@ src/
 
 ### Database Architecture
 - **Schema Location**: `prisma/schema.prisma`
-- **Core Models**: User, UserAccounts, UserDetails, AttendeeRegistration
-- **Event Registration System**: Comprehensive BEACON 2025 event registration with enums for Gender, AgeBracket, Industry, EventDay, AttendeeType, InterestArea, HearAboutEvent
-- **User Management**: Multi-table user system with accounts, details, and registration data
-- **Database Provider**: PostgreSQL with Supabase
-- **Client Generation**: Custom output to `src/generated/prisma`
+- **Core Models**: 
+  - User system: `Users`, `user_accounts`, `user_details`
+  - Registration: `Visitors` (general event), `Conference` (conference-specific)
+  - Payment: `ConferencePayment`, `SummaryOfPayments`
+  - Events: `Events`, `CodeDistribution`
+  - Admin: `ManagerAccount`
+- **Key Enums**: Gender, AgeBracket, Industry, AttendeeType, InterestArea, HearAboutEvent, MaritimeLeagueMembership, PaymentMode, PaymentStatus
+- **Registration Flow**: Dual registration system for visitors and conference attendees
+- **Payment Integration**: PayMongo integration with webhook-based payment confirmation
+- **Database Provider**: PostgreSQL with Supabase (supports both `DATABASE_URL` and `DIRECT_URL`)
+- **Client Generation**: Standard Prisma client (not custom output)
 
 ### Authentication Flow
 - Route-based authentication with Next.js route groups
@@ -65,15 +80,19 @@ src/
 
 ### Key Configuration
 - **Import Aliases**: `@/` maps to `./src/` for clean imports
-- **Component Aliases**: Pre-configured paths for `@/components`, `@/lib`, `@/hooks`, `@/ui`
-- **UI Library**: Lucide React for icons, extensive Radix UI primitives
+- **TypeScript**: Strict mode enabled with ES2017 target
+- **UI Library**: Lucide React for icons, extensive Radix UI primitives (40+ components)
 - **Fonts**: Custom Urbanist font family with multiple weights and styles, plus Geist fonts
+- **Webpack Config**: Custom fallbacks for Node.js modules (fs, path, crypto)
+- **Face Recognition**: face-api.js integration with server components external packages config
 
 ### Development Notes
 - Uses Turbopack in development for enhanced performance
 - Organized hook structure separating standard hooks from React Query hooks
-- Route group architecture for clean authentication flow
-- Custom Prisma client output location for better organization
+- Route group architecture for clean authentication flow: `(auth)`, `(private)`, `(public)`
+- Admin panel with data tables for managing visitors, conferences, events, and codes
+- Real-time capabilities via Supabase realtime provider
+- State management using Zustand stores for different registration types
 
 ### Domain Context
 - **BEACON 2025**: Maritime industry event registration and management system
@@ -82,8 +101,19 @@ src/
 - **Registration Flow**: Comprehensive multi-step registration with personal, professional, and event-specific data
 
 ### Development Protocols
-- Always look at the prisma/schema.prisma before creating api or codes
-- Always check types/ directory if there is available data types for specific schema model
+- Always look at `prisma/schema.prisma` before creating API routes or database-related code
+- Always check `src/types/` directory if there are available data types for specific schema models
+- Face capture functionality is integrated - check `face-api.js` configuration in Next.js config
+- Use appropriate registration stores: `useRegistrationStore` for visitors, `useConferenceRegistrationStore` for conferences
+- Admin routes require authentication validation via `adminSessions.ts`
+- **Realtime Integration**: Admin pages automatically refresh when database changes occur via Supabase realtime subscriptions
+
+### Realtime Features
+- **Live Admin Dashboard**: Visitor and conference admin tables show real-time updates with visual indicators
+- **Auto-refresh**: Tables automatically refresh when realtime changes are detected
+- **Connection Status**: Visual indicators show when realtime connection is active
+- **Fallback Strategy**: API-based data loading when realtime is unavailable
+- **Toast Notifications**: Real-time event notifications for database changes
 
 ## Warnings and Cautions
 
@@ -150,5 +180,31 @@ webhook.on('payment.paid', async (event) => {
 });
 ```
 
-## Linting Notes
-- I have no linting I disabled it
+## Technical Architecture Notes
+
+### State Management Pattern
+- **Zustand Stores**: Individual stores for different registration types and app state
+- **TanStack Query**: Server state management with real-time cache updates
+- **Supabase Realtime**: WebSocket-based real-time database updates with comprehensive admin dashboard integration
+
+### Component Architecture
+- **Multi-step Forms**: Conference and visitor registration with progress tracking
+- **Draft Management**: Auto-save functionality for incomplete registrations
+- **Admin Data Tables**: TanStack Table integration for data management
+- **Modal Patterns**: Consistent dialog and sheet usage throughout the app
+
+### API Route Structure
+```
+api/
+├── admin/           # Admin-only endpoints
+├── check-email/     # Email validation
+├── code-distribution/ # Registration codes
+├── conference/      # Conference registration & receipts
+├── events/          # Event management
+└── visitors/        # Visitor registration
+```
+
+### Linting & Code Quality
+- ESLint configured but disabled by default
+- TypeScript strict mode enforced
+- Prisma client regeneration on build and install

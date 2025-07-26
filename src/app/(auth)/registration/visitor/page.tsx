@@ -40,11 +40,10 @@ import { EventPreferences } from "./visitor-components/EventPreferences";
 import { EmergencySafety } from "./visitor-components/EmergencySafety";
 import { AdditionalInfo } from "./visitor-components/AdditionalInfo";
 import { RegistrationProgress } from "./components/RegistrationProgress";
-import { DraftManager } from "./components/DraftManager";
 import { UserDetails } from "./visitor-components/UserDetails";
 import { UserAccounts } from "./visitor-components/UserAccounts";
-import { Separator } from "@/components/ui/separator";
 import { Icon } from "@iconify/react";
+import { DraftManagerVisitor } from "./components/DraftManager";
 
 export default function VisitorRegistrationPage() {
   const {
@@ -462,7 +461,8 @@ export default function VisitorRegistrationPage() {
             <CardDescription className="">
               <div className="text-accent-foreground dark:text-accent">
                 <p className="font-semibold">
-                  Official Visitor Registration Form
+                  Official Registration Form – Conference | Philippine Ships &
+                  Boats In-Water Show | Blue Runway Fashion Show
                 </p>
                 <p>
                   September 29 – October 1, 2025 | SMX Convention Center, MOA
@@ -473,7 +473,7 @@ export default function VisitorRegistrationPage() {
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden flex flex-col p-0">
             <div className="mb-4 shrink-0">
-              <DraftManager form={form} />
+              <DraftManagerVisitor />
             </div>
             <div className="flex-1 overflow-y-auto pb-32">
               <Form {...form}>

@@ -1,6 +1,7 @@
 // (private)/admin/conference/page.tsx
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -17,6 +18,7 @@ import { Loader2, Users, LogOut } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import {
   useAdminConferences,
+  useAdminConferencesRealtime,
   useDeleteConference,
 } from "@/hooks/tanstasck-query/useAdminConference";
 import { useAdminLogout } from "@/hooks/tanstasck-query/useAdminAuth";
@@ -26,7 +28,9 @@ export default function ConferenceDashboard() {
   const router = useRouter();
   const { currentAdmin } = useAdminStore();
   const logout = useAdminLogout();
-  const { data: conferencesData, isLoading, error, refetch } = useAdminConferences();
+  
+  // Use the realtime-enabled hook
+  const { data: conferencesData, isLoading, error, refetch, isRealtimeEnabled } = useAdminConferencesRealtime();
   const deleteConference = useDeleteConference();
 
 // Authentication is now handled by the layout, so we don't need these checks here
@@ -56,9 +60,20 @@ export default function ConferenceDashboard() {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Conference Registrations
+            {isRealtimeEnabled && (
+              <div className="flex items-center gap-2 ml-auto">
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Live</span>
+              </div>
+            )}
           </CardTitle>
           <CardDescription>
             All conference registrations for BEACON 2025 event
+            {isRealtimeEnabled && (
+              <span className="text-green-600 ml-2">
+                • Real-time updates enabled
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -89,10 +104,17 @@ export default function ConferenceDashboard() {
           {conferencesData && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Conference Attendees:{" "}
-                  <span className="font-semibold">{conferencesData.count}</span>
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Conference Attendees:{" "}
+                    <span className="font-semibold">{conferencesData.count}</span>
+                  </p>
+                  {isRealtimeEnabled && (
+                    <p className="text-sm text-green-600">
+                      ⚡ Realtime Active
+                    </p>
+                  )}
+                </div>
                 <Button variant="outline" onClick={() => refetch()}>
                   Refresh
                 </Button>
